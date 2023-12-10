@@ -125,7 +125,7 @@ class Font:
         font_bytes += self.font.get_bold().to_bytes(BOOL_BYTES)
         # italic
         font_bytes += self.font.get_italic().to_bytes(BOOL_BYTES)
-        # char_set_bytes_length
+        # char_set_length
         font_bytes += len(self.char_dict.keys()).to_bytes(INT_BYTES)
         # char_set_bytes
         char_set_bytes = b""
@@ -148,7 +148,7 @@ class Font:
         byte_pointer += BOOL_BYTES
         italic = bool.from_bytes(data[byte_pointer : byte_pointer + BOOL_BYTES])
         byte_pointer += BOOL_BYTES
-        char_set_bytes_length = int.from_bytes(
+        char_set_length = int.from_bytes(
             data[byte_pointer : byte_pointer + INT_BYTES]
         )
         byte_pointer += INT_BYTES
@@ -160,7 +160,7 @@ class Font:
                     + UNICODE_CHAR_BYTES * (i + 1)
                 ]
             )
-            for i in range(char_set_bytes_length)
+            for i in range(char_set_length)
         )
         return Font(font_name, font_size, bold, italic, char_set)
 
