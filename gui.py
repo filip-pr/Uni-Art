@@ -298,7 +298,7 @@ class AppGUI:
                         ],
                         initialdir=self.render_input_path.get(),
                         initialfile=self.render_input_path.get()
-                        .split("/")[-1]
+                        .split("/")[-1].split("\\")[-1] # splitting the path by / or \
                         .split(".")[0],
                     ),
                 ),
