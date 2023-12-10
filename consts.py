@@ -1,4 +1,4 @@
-"""Module for constants used in the project."""
+"""Module containing constants used in the project."""
 import os
 
 UNICODE_CHAR_BYTES = 3
