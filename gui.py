@@ -417,8 +417,8 @@ class AppGUI:
         video_player_controls_hint_label = ttk.Label(
             self.master,
             text=(
-                "C: Copy current frame to clipboard\n"
-                + "SPACE (video): Start video and Pause/Unpause\n"
+                "C: Copy image (or current video frame) to clipboard\n"
+                + "SPACE (video): Start playing video - then Pause/Unpause\n"
                 + "Left/Right arrow (video): Rewind/Skip 10 seconds"
             ),
             font=label_font,
