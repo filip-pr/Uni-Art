@@ -1,4 +1,4 @@
-"""Module for the CharImage class."""
+"""Module containing the CharImage class."""
 import math
 
 import numpy as np
