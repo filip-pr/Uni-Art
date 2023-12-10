@@ -35,15 +35,15 @@ class CharVideo:
 
         # loading main data from the source file
         self.data_stream = open(source_path, "rb")
-        font_bytes_len = int.from_bytes(self.data_stream.read(INT_BYTES))
-        self.font = Font.from_bytes(self.data_stream.read(font_bytes_len))
-        self.video_frame_rate = int.from_bytes(self.data_stream.read(INT_BYTES))
-        video_frame_width = int.from_bytes(self.data_stream.read(INT_BYTES))
-        video_frame_height = int.from_bytes(self.data_stream.read(INT_BYTES))
-        self.video_frame_count = int.from_bytes(self.data_stream.read(INT_BYTES))
-        self.audio_sample_rate = int.from_bytes(self.data_stream.read(INT_BYTES))
-        self.audio_channel_count = int.from_bytes(self.data_stream.read(INT_BYTES))
-        self.audio_segment_count = int.from_bytes(self.data_stream.read(INT_BYTES))
+        font_bytes_len = int.from_bytes(self.data_stream.read(INT_BYTES, byteorder=BYTE_ORDER))
+        self.font = Font.from_bytes(self.data_stream.read(font_bytes_len, byteorder=BYTE_ORDER))
+        self.video_frame_rate = int.from_bytes(self.data_stream.read(INT_BYTES, byteorder=BYTE_ORDER))
+        video_frame_width = int.from_bytes(self.data_stream.read(INT_BYTES, byteorder=BYTE_ORDER))
+        video_frame_height = int.from_bytes(self.data_stream.read(INT_BYTES, byteorder=BYTE_ORDER))
+        self.video_frame_count = int.from_bytes(self.data_stream.read(INT_BYTES, byteorder=BYTE_ORDER))
+        self.audio_sample_rate = int.from_bytes(self.data_stream.read(INT_BYTES, byteorder=BYTE_ORDER))
+        self.audio_channel_count = int.from_bytes(self.data_stream.read(INT_BYTES, byteorder=BYTE_ORDER))
+        self.audio_segment_count = int.from_bytes(self.data_stream.read(INT_BYTES, byteorder=BYTE_ORDER))
         # calculating offsets and sizes
         self.audio_segment_size = (
             self.audio_sample_rate * self.audio_channel_count * AUDIO_BYTES_PER_SAMPLE
