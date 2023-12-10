@@ -31,7 +31,7 @@ choose the destination, character count and in case of video conversion the FPS 
 
 ### Possible issues
 `Image or video has distorted characters or weird artifacts on the screen:`
-- Lower the font size a bit, it might need some experimentation. This is caused due to downscaling of the rendered image that would be too big to fit on screen otherwise
+- Lower the font size a bit, it might need some experimentation. This is caused due to the downscaling of the rendered image/video that would be too big to fit on screen otherwise
 
 
 `Video is lagging/skipping frames/too slow:`
