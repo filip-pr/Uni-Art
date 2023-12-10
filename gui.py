@@ -1,4 +1,4 @@
-"""Module describing the GUI of the application."""
+"""Module containing the GUI of the application."""
 import tkinter as tk
 from tkinter import ttk
 import tkinter.font
