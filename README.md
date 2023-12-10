@@ -2,7 +2,7 @@
 
 A program I created as a semester project at a university.
 
-Allows of conversion of almost any image/video type to a corresponding data type made only out of Unicode characters and of course their playback (video players also supports audio).
+Allows for conversion of almost any image/video type to a corresponding data type made only out of Unicode characters and of course their playback (video player also supports audio).
 
 Uni-Art allows for a great deal of customization like:
 
@@ -10,8 +10,6 @@ Uni-Art allows for a great deal of customization like:
 - Font in which the image or video will be rendered (and made to match the best)
 - Specifying number of characters an image or a video frame should have
 - And more..
-
-Please note that this is only the first release and the app is still likely somewhat buggy.
 
 ## Installation
 
@@ -28,6 +26,14 @@ To run Uni-Art one needs some non-standard libraries. To install those simply us
 After the installation everything is quite simple, just put all the files from this repository into a folder and run `main.py`.
 A window named Uni-Art should appear, from there it should be quite straight forward. Just set you font, choose an image or a video you want to convert,
 choose the destination, character count and in case of video conversion the FPS and whether the converted video should have the original audio. After that simply click render and once the rendering is done click the Show/Play button. If you already have a converted file and you just want to play it, just select it and click Show/Play.
+
+### Possible issues
+`Image or video has distorted characters or weird artifacts on the screen:`
+- Lower the font size a bit, it might need some experimentation. This is caused due to downscaling of the rendered image that would be too big to fit on screen otherwise
+
+
+`Video is lagging/skipping frames/too slow:`
+- Decrease the video FPS or the character count. This is caused due to pygame not being able to handle rendering all the characters in the desired frame rate.
 
 ### Configuring of char_set_ranges.txt
 To add custom character ranges as character sets one must add lines to the char_set_ranges.txt. All the lines must be in format:
