@@ -37,6 +37,9 @@ choose the destination, character count and in case of video conversion the FPS 
 `Video is lagging/skipping frames/too slow:`
 - Decrease the video FPS or the character count. This is caused due to pygame not being able to handle rendering all the characters in the desired frame rate.
 
+`Unable to open .charim or .charvid file that was created on different computer`
+- There isn't an easy fix for this, because it is likely caused by you not having the font the image was created in. You can either try to find out what font it was created with and somehow install it or find the source image/video and recreate it yourself.
+
 ### Configuring of char_set_ranges.txt
 To add custom character ranges as character sets one must add lines to the char_set_ranges.txt. All the lines must be in format:
 
