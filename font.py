@@ -126,29 +126,39 @@ class Font:
         # italic
         font_bytes += self.font.get_italic().to_bytes(BOOL_BYTES, byteorder=BYTE_ORDER)
         # char_set_length
-        font_bytes += len(self.char_dict.keys()).to_bytes(INT_BYTES, byteorder=BYTE_ORDER)
+        font_bytes += len(self.char_dict.keys()).to_bytes(
+            INT_BYTES, byteorder=BYTE_ORDER
+        )
         # char_set_bytes
         char_set_bytes = b""
         for char_index in self.char_dict.keys():
-            char_set_bytes += char_index.to_bytes(UNICODE_CHAR_BYTES, byteorder=BYTE_ORDER)
+            char_set_bytes += char_index.to_bytes(
+                UNICODE_CHAR_BYTES, byteorder=BYTE_ORDER
+            )
         font_bytes += char_set_bytes
         return font_bytes
 
     @staticmethod
     def from_bytes(data: bytes) -> "Font":
         """Returns a Font object from the given bytes."""
-        font_name_bytes_length = int.from_bytes(data[:INT_BYTES])
+        font_name_bytes_length = int.from_bytes(data[:INT_BYTES], byteorder=BYTE_ORDER)
         byte_pointer = INT_BYTES
         font_name = data[byte_pointer : byte_pointer + font_name_bytes_length].decode()
         byte_pointer += font_name_bytes_length
-        font_size = int.from_bytes(data[byte_pointer : byte_pointer + INT_BYTES])
+        font_size = int.from_bytes(
+            data[byte_pointer : byte_pointer + INT_BYTES], byteorder=BYTE_ORDER
+        )
         byte_pointer += INT_BYTES
-        bold = bool.from_bytes(data[byte_pointer : byte_pointer + BOOL_BYTES])
+        bold = bool.from_bytes(
+            data[byte_pointer : byte_pointer + BOOL_BYTES], byteorder=BYTE_ORDER
+        )
         byte_pointer += BOOL_BYTES
-        italic = bool.from_bytes(data[byte_pointer : byte_pointer + BOOL_BYTES])
+        italic = bool.from_bytes(
+            data[byte_pointer : byte_pointer + BOOL_BYTES], byteorder=BYTE_ORDER
+        )
         byte_pointer += BOOL_BYTES
         char_set_length = int.from_bytes(
-            data[byte_pointer : byte_pointer + INT_BYTES]
+            data[byte_pointer : byte_pointer + INT_BYTES], byteorder=BYTE_ORDER
         )
         byte_pointer += INT_BYTES
         char_set = set(
@@ -157,7 +167,8 @@ class Font:
                     byte_pointer
                     + UNICODE_CHAR_BYTES * i : byte_pointer
                     + UNICODE_CHAR_BYTES * (i + 1)
-                ]
+                ],
+                byteorder=BYTE_ORDER,
             )
             for i in range(char_set_length)
         )
