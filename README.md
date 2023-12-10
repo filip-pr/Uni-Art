@@ -11,7 +11,7 @@ Uni-Art allows for a great deal of customization like:
 - Specifying number of characters an image or a video frame should have
 - And more..
 
-Please note that only operating system this was tested on is Windows 10 and there is no guarantee of it running anywhere else. Although in theory there shouldn't be a reason for it not to (at least not one that I'm aware of).
+Please note that only operating system this was tested on is Windows 10 (with python 3.11.3) and there is no guarantee of it running anywhere else. Although in theory there shouldn't be a reason for it not to (at least not one that I'm aware of).
 
 ## Installation
 
