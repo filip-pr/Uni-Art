@@ -27,7 +27,9 @@ class AppGUI:
         self.loaded_media_type = None
         self.loaded_char_media_path = None
         self.loaded_char_media_type = None
-        self.font_choices = sorted(list(filter(Font.name_exists, pygame.font.get_fonts())))
+        self.font_choices = sorted(
+            list(filter(Font.name_exists, pygame.font.get_fonts()))
+        )
 
         # font menu variables
         self.font_name = tk.StringVar(self.master)
