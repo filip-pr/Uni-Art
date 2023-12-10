@@ -26,8 +26,8 @@ To run Uni-Art one needs some non-standard libraries. To install those simply us
 
 ### Running of the program
 After the installation everything is quite simple, just put all the files from this repository into a folder and run `main.py`.
-A window named Uni-Art should appear, from there it should be quite straight forward. Just set you font, choose an image or a video you want to convert,
-choose the destination, character count and in case of video conversion the FPS and whether the converted video should have the original audio. After that simply click render and once the rendering is done click the Show/Play button. If you already have a converted file and you just want to play it, just select it and click Show/Play.
+A window named Uni-Art should appear, from there it should be quite straight forward. Just set your font, choose an image or a video you want to convert,
+choose the destination, character count and in case of video conversion the FPS and whether the converted video should have the original audio. After that simply click render and once the rendering is done click the Show/Play button. If you already have a converted file and you just want to show/play it, just select it and click Show/Play.
 
 ### Possible issues
 `Image or video has distorted characters or weird artifacts on the screen:`
