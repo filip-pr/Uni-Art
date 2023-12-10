@@ -17,6 +17,7 @@ class CharImage:
         char_count: int | str,
         font: Font,
     ):
+        
         if isinstance(char_count, str):
             try:
                 char_count = int(char_count)
