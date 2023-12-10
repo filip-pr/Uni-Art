@@ -95,8 +95,10 @@ class AppGUI:
 
         self.render_status_label = None
         self.render_dest_path_button = None
+        self.render_char_file_button = None
 
         self.char_file_info_label = None
+        self.char_file_path_button = None
         self.char_file_status_label = None
         self.char_file_show_button = None
         self.char_file_play_status_label = None
@@ -345,13 +347,13 @@ class AppGUI:
         )
 
         # render file button
-        render_char_file_button = ttk.Button(
+        self.render_char_file_button = ttk.Button(
             self.master,
             text="Render",
             takefocus=False,
             command=self._render_file,
         )
-        render_char_file_button.grid(
+        self.render_char_file_button.grid(
             row=14, column=0, padx=10, sticky="ew", columnspan=5
         )
 
@@ -375,7 +377,7 @@ class AppGUI:
         char_file_path_input.grid(row=17, column=0, padx=10, sticky="ew", columnspan=4)
 
         # char file source path button
-        char_file_path_button = ttk.Button(
+        self.char_file_path_button = ttk.Button(
             self.master,
             text="Browse",
             takefocus=False,
@@ -390,7 +392,7 @@ class AppGUI:
                 self._load_char_file(),
             ],
         )
-        char_file_path_button.grid(row=17, column=4, sticky="ew", padx=10)
+        self.char_file_path_button.grid(row=17, column=4, sticky="ew", padx=10)
 
         # char file status label
         self.char_file_status_label = ttk.Label(self.master, font=status_label_font)
@@ -640,23 +642,29 @@ class AppGUI:
         if self.render_dest_path.get() == "":
             self.render_status_label.config(text="No render destination path set")
             return
+        render_dest_path = self.render_dest_path.get()
         if self.loaded_media_type == "image":
             try:
                 self.char_image = CharImage(
                     self.loaded_media_path, self.char_count.get(), self.font
                 )
-                self.char_image.as_file(self.render_dest_path.get())
+                self.char_image.as_file(render_dest_path)
                 self.render_status_label.config(text="Image rendered successfully")
                 self.loaded_char_media_type = "image"
-                self.char_image = CharImage.from_file(self.render_dest_path.get())
+                self.char_image = CharImage.from_file(render_dest_path)
             except (ValueError, OSError) as e:
                 self.render_status_label.config(text=str(e))
+
                 return
         else:
             try:
+                self.char_file_show_button.config(state=tk.DISABLED)
+                self.render_char_file_button.config(state=tk.DISABLED)
+                self.char_file_path_button.config(state=tk.DISABLED)
+                
                 for status in CharVideo.render(
                     self.loaded_media_path,
-                    self.render_dest_path.get(),
+                    render_dest_path,
                     self.char_count.get(),
                     self.video_render_fps.get(),
                     self.video_render_audio.get(),
@@ -665,12 +673,17 @@ class AppGUI:
                     self.render_status_label.config(text=status)
                     self.master.update()
                 self.loaded_char_media_type = "video"
-                self.char_video = CharVideo(self.render_dest_path.get())
+                self.render_char_file_button.config(state=tk.NORMAL)
+                self.char_video = CharVideo(render_dest_path)
             except (ValueError, OSError) as e:
                 self.render_status_label.config(text=str(e))
+                if self.loaded_char_media_path is not None:
+                    self.char_file_show_button.config(state=tk.NORMAL)
+                self.render_char_file_button.config(state=tk.NORMAL)
+                self.char_file_path_button.config(state=tk.NORMAL)
                 return
         self.char_file_show_button.config(state=tk.NORMAL)
-        self.loaded_char_media_path = self.render_dest_path.get()
+        self.loaded_char_media_path = render_dest_path
         self.render_dest_path.set("")
         self.char_file_info_label.config(
             text=f"Char file: {self.loaded_char_media_path.split('/')[-1]}"
