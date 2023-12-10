@@ -59,31 +59,34 @@ class Font:
                 "Not enough printable/font-supported characters in char set"
             )
         # rendering all the characters and calculating their average color
-        char_averages = np.empty((len(self.char_dict), 3), dtype=np.float64)
-        for i, char in enumerate(map(chr, sorted(list(self.char_dict.keys())))):
-            char_surface = pygame.Surface(self.size)
-            char_surface.fill((0, 0, 0))
-            char_render = self.font.render(char, True, (255, 255, 255))
-            center = (
-                (self.width() - char_render.get_size()[0]) // 2,
-                (self.height() - char_render.get_size()[1]) // 2,
-            )
-            char_surface.blit(char_render, center)
-            rendered_char = char_surface.convert_alpha().premul_alpha().convert()
-            average = np.array(
-                [
-                    np.average(pygame.surfarray.pixels_red(rendered_char)),
-                    np.average(pygame.surfarray.pixels_green(rendered_char)),
-                    np.average(pygame.surfarray.pixels_blue(rendered_char)),
-                ]
-            )
-            char_averages[i][:] = average
-            self.char_dict[ord(char)] = rendered_char
-        # normalizing the average colors and creating a KDTree for them
-        char_averages /= np.max(char_averages[:], axis=0)
-        for i, char in enumerate(map(chr, sorted(list(self.char_dict.keys())))):
-            self.kd_tree_index_map.append(ord(char))
-        self.kd_tree = KDTree(char_averages, copy_data=True)
+        try:
+            char_averages = np.empty((len(self.char_dict), 3), dtype=np.float64)
+            for i, char in enumerate(map(chr, sorted(list(self.char_dict.keys())))):
+                char_surface = pygame.Surface(self.size)
+                char_surface.fill((0, 0, 0))
+                char_render = self.font.render(char, True, (255, 255, 255))
+                center = (
+                    (self.width() - char_render.get_size()[0]) // 2,
+                    (self.height() - char_render.get_size()[1]) // 2,
+                )
+                char_surface.blit(char_render, center)
+                rendered_char = char_surface.convert_alpha().premul_alpha().convert()
+                average = np.array(
+                    [
+                        np.average(pygame.surfarray.pixels_red(rendered_char)),
+                        np.average(pygame.surfarray.pixels_green(rendered_char)),
+                        np.average(pygame.surfarray.pixels_blue(rendered_char)),
+                    ]
+                )
+                char_averages[i][:] = average
+                self.char_dict[ord(char)] = rendered_char
+            # normalizing the average colors and creating a KDTree for them
+            char_averages /= np.max(char_averages[:], axis=0)
+            for i, char in enumerate(map(chr, sorted(list(self.char_dict.keys())))):
+                self.kd_tree_index_map.append(ord(char))
+            self.kd_tree = KDTree(char_averages, copy_data=True)
+        except pygame.error as e:
+            raise ValueError("Could not load font") from e
 
     def aspect_ratio(self) -> float:
         """Returns the aspect ratio of the font."""
