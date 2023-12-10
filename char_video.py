@@ -18,6 +18,7 @@ from consts import (
 )
 
 
+# Should no longer require FFMPEG to be installed, using moviepy's ffmpeg binary instead.
 class CharVideo:
     """Class representing a video made out of characters."""
 
@@ -39,12 +40,12 @@ class CharVideo:
         video_frame_width = int.from_bytes(self.data_stream.read(INT_BYTES))
         video_frame_height = int.from_bytes(self.data_stream.read(INT_BYTES))
         self.video_frame_count = int.from_bytes(self.data_stream.read(INT_BYTES))
-        self.audio_frame_rate = int.from_bytes(self.data_stream.read(INT_BYTES))
+        self.audio_sample_rate = int.from_bytes(self.data_stream.read(INT_BYTES))
         self.audio_channel_count = int.from_bytes(self.data_stream.read(INT_BYTES))
         self.audio_segment_count = int.from_bytes(self.data_stream.read(INT_BYTES))
         # calculating offsets and sizes
         self.audio_segment_size = (
-            self.audio_frame_rate * self.audio_channel_count * AUDIO_BYTES_PER_SAMPLE
+            self.audio_sample_rate * self.audio_channel_count * AUDIO_BYTES_PER_SAMPLE
         )
         self.audio_offset = self.data_stream.tell()
         self.video_frame_shape = (video_frame_width, video_frame_height)
@@ -142,7 +143,7 @@ class CharVideo:
                     wf.seek(video_count_pos + INT_BYTES)
                     # if video has audio and render_audio is True
                     if audio is not None and render_audio:
-                        # audio_frame_rate
+                        # audio_sample_rate
                         wf.write(audio.fps.to_bytes(INT_BYTES))
                         # audio_channel_count
                         wf.write(audio.nchannels.to_bytes(INT_BYTES))
@@ -160,7 +161,8 @@ class CharVideo:
                             nbytes=AUDIO_BYTES_PER_SAMPLE,
                             quantize=True,
                         ):
-                            audio_chunk_bytes = audio_chunk.tobytes()
+                            # making sure the audio chunk is in consistent byte order
+                            audio_chunk_bytes = audio_chunk.newbyteorder(">").tobytes()
                             wf.write(audio_chunk_bytes)
                             audio_written_bytes += len(audio_chunk_bytes)
                             audio_frame_count += 1
@@ -188,7 +190,7 @@ class CharVideo:
                         wf.seek(original_pos)
                     # if video doesn't have audio or render_audio is False
                     else:
-                        # audio_frame_rate (placeholder)
+                        # audio_sample_rate (placeholder)
                         wf.write((0).to_bytes(INT_BYTES))
                         # audio_channel_count (placeholder)
                         wf.write((0).to_bytes(INT_BYTES))
@@ -236,7 +238,7 @@ class CharVideo:
             self.audio_offset + segment_number * self.audio_segment_size
         )
         audio_bytes = self.data_stream.read(self.audio_segment_size)
-        sound_array = np.frombuffer(audio_bytes, dtype=np.int16).reshape(
+        sound_array = np.frombuffer(audio_bytes, dtype=">i2").reshape(
             -1, self.audio_channel_count
         )
         # adjusting the audio array to match the number of audio channels in pygame.mixer
