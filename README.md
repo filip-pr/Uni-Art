@@ -50,7 +50,7 @@ To add custom character ranges as character sets one must add lines to the char_
 
 ## .charim and .charvid datatypes
 
-### Used datatype information
+### Used datatypes information
 - `int` is a 4 byte unsigned integer in big endian ordering
 - `string` is a varying length string encoded in utf-8
 - `bool` is a 1 byte value representing a boolean
