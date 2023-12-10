@@ -13,9 +13,12 @@ from char_image import CharImage
 from consts import (
     UNICODE_CHAR_BYTES,
     INT_BYTES,
+    BYTE_ORDER,
+    NUMPY_BYTE_ORDER,
     AUDIO_BYTES_PER_SAMPLE,
     RENDER_TEMPS_PATH,
 )
+
 
 class CharVideo:
     """Class representing a video made out of characters."""
@@ -127,24 +130,24 @@ class CharVideo:
                     audio_written_bytes = 0
                     font_bytes = font.to_bytes()
                     # font_bytes_len
-                    wf.write(len(font_bytes).to_bytes(INT_BYTES))
+                    wf.write(len(font_bytes).to_bytes(INT_BYTES, byteorder=BYTE_ORDER))
                     # font_bytes
                     wf.write(font_bytes)
                     # video_frame_rate
-                    wf.write(frame_rate.to_bytes(INT_BYTES))
+                    wf.write(frame_rate.to_bytes(INT_BYTES, byteorder=BYTE_ORDER))
                     # video_frame_shape[0] (width)
-                    wf.write(size[1].to_bytes(INT_BYTES))
+                    wf.write(size[1].to_bytes(INT_BYTES, byteorder=BYTE_ORDER))
                     # video_frame_shape[1] (height)
-                    wf.write(size[0].to_bytes(INT_BYTES))
+                    wf.write(size[0].to_bytes(INT_BYTES, byteorder=BYTE_ORDER))
                     # # skipping INT_BYTES bytes for video_frame_count (will be written later)
                     video_count_pos = wf.tell()
                     wf.seek(video_count_pos + INT_BYTES)
                     # if video has audio and render_audio is True
                     if audio is not None and render_audio:
                         # audio_sample_rate
-                        wf.write(audio.fps.to_bytes(INT_BYTES))
+                        wf.write(audio.fps.to_bytes(INT_BYTES, byteorder=BYTE_ORDER))
                         # audio_channel_count
-                        wf.write(audio.nchannels.to_bytes(INT_BYTES))
+                        wf.write(audio.nchannels.to_bytes(INT_BYTES, byteorder=BYTE_ORDER))
                         audio_segment_size = (
                             audio.fps * audio.nchannels * AUDIO_BYTES_PER_SAMPLE
                         )
@@ -160,7 +163,7 @@ class CharVideo:
                             quantize=True,
                         ):
                             # making sure the audio chunk is in consistent byte order
-                            audio_chunk_bytes = audio_chunk.newbyteorder(">").tobytes()
+                            audio_chunk_bytes = audio_chunk.newbyteorder(NUMPY_BYTE_ORDER).tobytes()
                             wf.write(audio_chunk_bytes)
                             audio_written_bytes += len(audio_chunk_bytes)
                             audio_frame_count += 1
@@ -184,16 +187,16 @@ class CharVideo:
                         # then returning back to the current end of the file
                         original_pos = wf.tell()
                         wf.seek(audio_count_pos)
-                        wf.write((audio_frame_count).to_bytes(INT_BYTES))
+                        wf.write((audio_frame_count).to_bytes(INT_BYTES, byteorder=BYTE_ORDER))
                         wf.seek(original_pos)
                     # if video doesn't have audio or render_audio is False
                     else:
                         # audio_sample_rate (placeholder)
-                        wf.write((0).to_bytes(INT_BYTES))
+                        wf.write((0).to_bytes(INT_BYTES, byteorder=BYTE_ORDER))
                         # audio_channel_count (placeholder)
-                        wf.write((0).to_bytes(INT_BYTES))
+                        wf.write((0).to_bytes(INT_BYTES, byteorder=BYTE_ORDER))
                         # audio_segment_count (placeholder)
-                        wf.write((0).to_bytes(INT_BYTES))
+                        wf.write((0).to_bytes(INT_BYTES, byteorder=BYTE_ORDER))
                     # all of the video frames
                     for frame in video.iter_frames():
                         char_image = CharImage(frame, 1, font)
@@ -206,7 +209,7 @@ class CharVideo:
                         yield f"Rendering video: {progress}%"
                     # returning to video_frame_count position and writing the value
                     wf.seek(video_count_pos)
-                    wf.write(video_frame_count.to_bytes(INT_BYTES))
+                    wf.write(video_frame_count.to_bytes(INT_BYTES, byteorder=BYTE_ORDER))
             except OSError as e:
                 raise OSError(f"Could not save CharVideo to '{dest_path}'") from e
             video.close()
@@ -236,7 +239,7 @@ class CharVideo:
             self.audio_offset + segment_number * self.audio_segment_size
         )
         audio_bytes = self.data_stream.read(self.audio_segment_size)
-        sound_array = np.frombuffer(audio_bytes, dtype=">i2").reshape(
+        sound_array = np.frombuffer(audio_bytes, dtype=f"{NUMPY_BYTE_ORDER}i2").reshape(
             -1, self.audio_channel_count
         )
         # adjusting the audio array to match the number of audio channels in pygame.mixer
