@@ -1,10 +1,8 @@
 """Module describing the GUI of the application."""
 import tkinter as tk
 from tkinter import ttk
-
 import tkinter.font
 import tkinter.filedialog
-
 import os
 
 import pygame
@@ -646,6 +644,7 @@ class AppGUI:
                 self.char_image.as_file(self.render_dest_path.get())
                 self.render_status_label.config(text="Image rendered successfully")
                 self.loaded_char_media_type = "image"
+                self.char_image = CharImage.from_file(self.render_dest_path.get())
             except (ValueError, OSError) as e:
                 self.render_status_label.config(text=str(e))
                 return
@@ -662,6 +661,7 @@ class AppGUI:
                     self.render_status_label.config(text=status)
                     self.master.update()
                 self.loaded_char_media_type = "video"
+                self.char_video = CharVideo(self.render_dest_path.get())
             except (ValueError, OSError) as e:
                 self.render_status_label.config(text=str(e))
                 return
