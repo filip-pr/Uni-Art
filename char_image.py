@@ -102,8 +102,8 @@ class CharImage:
                         UNICODE_CHAR_BYTES
                         * (i * columns + j) : UNICODE_CHAR_BYTES
                         * (i * columns + j + 1)
-                    ]
-                )
+                    ],
+                byteorder=BYTE_ORDER)
                 for j in range(columns)
             ]
             for i in range(rows)
@@ -137,10 +137,10 @@ class CharImage:
         """Loads a CharImage from a file."""
         try:
             with open(file_name, "rb") as rf:
-                font_bytes_length = int.from_bytes(rf.read(INT_BYTES))
-                font = Font.from_bytes(rf.read(font_bytes_length))
-                rows = int.from_bytes(rf.read(INT_BYTES))
-                columns = int.from_bytes(rf.read(INT_BYTES))
+                font_bytes_length = int.from_bytes(rf.read(INT_BYTES, byteorder=BYTE_ORDER))
+                font = Font.from_bytes(rf.read(font_bytes_length, byteorder=BYTE_ORDER))
+                rows = int.from_bytes(rf.read(INT_BYTES, byteorder=BYTE_ORDER))
+                columns = int.from_bytes(rf.read(INT_BYTES, byteorder=BYTE_ORDER))
                 char_image = CharImage.chars_from_bytes(rf.read(), (rows, columns))
                 return CharImage(char_image, 1, font=font)
         except OSError as e:
