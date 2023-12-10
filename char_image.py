@@ -6,12 +6,12 @@ from PIL import Image
 import pygame
 
 from font import Font
-from consts import UNICODE_CHAR_BYTES, INT_BYTES
+from consts import UNICODE_CHAR_BYTES, INT_BYTES, BYTE_ORDER
 
 
 class CharImage:
     """Class representing an image made out of characters."""
-    
+
     def __init__(
         self,
         image_source: str | np.ndarray | list,
@@ -88,7 +88,7 @@ class CharImage:
         char_image_bytes = b""
         for row in self.chars:
             for char_index in row:
-                char_image_bytes += char_index.to_bytes(UNICODE_CHAR_BYTES)
+                char_image_bytes += char_index.to_bytes(UNICODE_CHAR_BYTES, byteorder=BYTE_ORDER)
         return char_image_bytes
 
     @staticmethod
@@ -120,13 +120,13 @@ class CharImage:
             with open(file_name, "wb") as wf:
                 # font_bytes_length
                 font_bytes = self.font.to_bytes()
-                wf.write(len(font_bytes).to_bytes(INT_BYTES))
+                wf.write(len(font_bytes).to_bytes(INT_BYTES, byteorder=BYTE_ORDER))
                 # font_bytes
                 wf.write(font_bytes)
                 # rows
-                wf.write(len(self.chars).to_bytes(INT_BYTES))
+                wf.write(len(self.chars).to_bytes(INT_BYTES, byteorder=BYTE_ORDER))
                 # columns
-                wf.write(len(self.chars[0]).to_bytes(INT_BYTES))
+                wf.write(len(self.chars[0]).to_bytes(INT_BYTES, byteorder=BYTE_ORDER))
                 # char_image_bytes
                 wf.write(self.chars_to_bytes())
         except OSError as e:
