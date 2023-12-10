@@ -17,8 +17,6 @@ from consts import (
     RENDER_TEMPS_PATH,
 )
 
-
-# Should no longer require FFMPEG to be installed, using moviepy's ffmpeg binary instead.
 class CharVideo:
     """Class representing a video made out of characters."""
 
