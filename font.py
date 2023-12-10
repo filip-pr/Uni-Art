@@ -4,7 +4,7 @@ import pygame
 import pygame.freetype
 from scipy.spatial import KDTree
 
-from consts import UNICODE_CHAR_BYTES, INT_BYTES, BOOL_BYTES
+from consts import UNICODE_CHAR_BYTES, INT_BYTES, BOOL_BYTES, BYTE_ORDER
 
 
 class Font:
@@ -116,21 +116,21 @@ class Font:
         font_bytes = b""
         # font_name_bytes_length
         font_name_bytes = self.name.encode()
-        font_bytes += len(font_name_bytes).to_bytes(INT_BYTES)
+        font_bytes += len(font_name_bytes).to_bytes(INT_BYTES, byteorder=BYTE_ORDER)
         # font_name_bytes
         font_bytes += font_name_bytes
         # font_size
-        font_bytes += self.font_size.to_bytes(INT_BYTES)
+        font_bytes += self.font_size.to_bytes(INT_BYTES, byteorder=BYTE_ORDER)
         # bold
-        font_bytes += self.font.get_bold().to_bytes(BOOL_BYTES)
+        font_bytes += self.font.get_bold().to_bytes(BOOL_BYTES, byteorder=BYTE_ORDER)
         # italic
-        font_bytes += self.font.get_italic().to_bytes(BOOL_BYTES)
+        font_bytes += self.font.get_italic().to_bytes(BOOL_BYTES, byteorder=BYTE_ORDER)
         # char_set_length
-        font_bytes += len(self.char_dict.keys()).to_bytes(INT_BYTES)
+        font_bytes += len(self.char_dict.keys()).to_bytes(INT_BYTES, byteorder=BYTE_ORDER)
         # char_set_bytes
         char_set_bytes = b""
         for char_index in self.char_dict.keys():
-            char_set_bytes += char_index.to_bytes(UNICODE_CHAR_BYTES)
+            char_set_bytes += char_index.to_bytes(UNICODE_CHAR_BYTES, byteorder=BYTE_ORDER)
         font_bytes += char_set_bytes
         return font_bytes
 
