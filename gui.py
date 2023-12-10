@@ -116,7 +116,11 @@ class AppGUI:
         # setting tkinter window properties
         self.master.geometry("460x660")
         self.master.title("Uni-Art")
-        self.master.iconbitmap("icon.ico")
+        # setting window icon
+        if os.name == "nt":
+            self.master.iconbitmap("icon.ico")
+        # setting icon on linux is a bit more complicated
+        # so we'll just skip it
         self.master.resizable(False, False)
         bg_color = "#EFEFEF"
         self.master.configure(background=bg_color)
