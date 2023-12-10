@@ -137,7 +137,6 @@ class Font:
     @staticmethod
     def from_bytes(data: bytes) -> "Font":
         """Returns a Font object from the given bytes."""
-        # returns a Font object from the given bytes
         font_name_bytes_length = int.from_bytes(data[:INT_BYTES])
         byte_pointer = INT_BYTES
         font_name = data[byte_pointer : byte_pointer + font_name_bytes_length].decode()
@@ -167,8 +166,10 @@ class Font:
     @staticmethod
     def name_exists(font_name: str) -> bool:
         """Checks if a font with the given name can be found through pygame."""
-        # returns whether a font with the given name can be found
-        freetype_font = pygame.freetype.SysFont(font_name, 12)
-        if font_name != freetype_font.name.lower().replace(" ", ""):
+        try:
+            freetype_font = pygame.freetype.SysFont(font_name, 12)
+            if font_name != freetype_font.name.lower().replace(" ", ""):
+                return False
+            return True
+        except AttributeError:
             return False
-        return True
