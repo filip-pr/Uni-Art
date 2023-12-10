@@ -4,6 +4,7 @@ import os
 import time
 
 import moviepy.editor as mpy
+from moviepy.config import get_setting
 import numpy as np
 import pygame.sndarray
 
@@ -108,7 +109,7 @@ class CharVideo:
         render_temp_path = os.path.join(RENDER_TEMPS_PATH, "render_temp.mkv")
         yield "Rescaling video... (application may become unresponsive)"
         ffmpeg_convert_cmd = (
-            f'ffmpeg -i "{source_path}" -c:v ffv1 '
+            f'{get_setting("FFMPEG_BINARY")} -i "{source_path}" -c:v ffv1 '
             + f'-vf "fps={frame_rate}, scale={size[0]}:{size[1]}" '
             + f'"{render_temp_path}"'
         )
