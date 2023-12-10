@@ -11,13 +11,13 @@ from consts import UNICODE_CHAR_BYTES, INT_BYTES
 
 class CharImage:
     """Class representing an image made out of characters."""
+    
     def __init__(
         self,
         image_source: str | np.ndarray | list,
         char_count: int | str,
         font: Font,
     ):
-        
         if isinstance(char_count, str):
             try:
                 char_count = int(char_count)
