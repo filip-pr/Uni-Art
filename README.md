@@ -61,7 +61,7 @@ To add custom character ranges as character sets one must add lines to the char_
 - `string` is a varying length string encoded in utf-8
 - `bool` is a 1 byte value representing a boolean
 - `unicode char bytes` is a 3 byte unsigned integer value in big endian ordering representing a Unicode character index
-- `audio channel sample` is a signed 2 byte integer in big endian ordering
+- `audio channel sample` is a 2 byte signed integer in big endian ordering
 
 ### Font bytes
 Font bytes `font_bytes` are in following format:
