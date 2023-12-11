@@ -11,6 +11,8 @@ Uni-Art allows for a great deal of customization like:
 - Specifying number of characters an image or a video frame should have
 - And more..
 
+Uni-Art player is also able to render and play very long video files. With semi-decent computer you can render more than 30 frames of 10000 characters per frame video per second, allowing you to render entire movie in less than its duration (I might or might not have pirated a Shrek movie to test that out).
+
 Please note that only operating system this was tested on is Windows 10 (with python 3.11.3) and there is no guarantee of it running anywhere else. Although in theory there shouldn't be a reason for it not to (at least not one that I'm aware of).
 
 ## Showcase
