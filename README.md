@@ -13,6 +13,9 @@ Uni-Art allows for a great deal of customization like:
 
 Please note that only operating system this was tested on is Windows 10 (with python 3.11.3) and there is no guarantee of it running anywhere else. Although in theory there shouldn't be a reason for it not to (at least not one that I'm aware of).
 
+## Showcase
+https://youtu.be/rXE1aUICx9A?si=y5uqKbSB2_orQNdm
+
 ## Installation
 
 To run Uni-Art one needs some non-standard libraries. To install those simply use:
