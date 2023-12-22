@@ -47,7 +47,7 @@ Run with arguments `python main.py <arguments>`.
 - `-fs <font size>` font size
 - `-b` if used the font will be bold
 - `-i` if used the font will be italic
-- `-c <char range>...` used to specify char set, after `-c` any amount (but at least one) of `char ranges` can be specified, all of them will be combined to make the used char set, each char range must be in fomat `star`-`end` where `start` and `end` are hexadecimal numbers and 0x0<=`start`<=`end`<=0x10FFFF
+- `-c <char range>...` used to specify char set, after `-c` any amount (but at least one) of `char ranges` can be specified, all of them will be combined to make the used char set, each char range must be in fomat `start`-`end` where `start` and `end` are hexadecimal numbers and 0x0<=`start`<=`end`<=0x10FFFF
 
 ### Possible issues
 `Image or video has distorted characters or weird artifacts on the screen:`
