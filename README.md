@@ -39,7 +39,7 @@ choose the destination, character count and in case of video conversion the FPS 
 
 #### Running in console (only supports image conversion)
 Run with arguments `python main.py <arguments>`.
-- `-m <mode>` mode can be gui, file or terminal (gui does the same thing as running without any arguments)
+- `-m <mode>` mode can be `gui`, `file` or `terminal` (`gui` does the same thing as running without any arguments)
 - `-cc <char count>` number of character the image should have
 - `-s <source file>` source file
 - `-d <destination file>` destination file (only necessary when outputing to a file (mode is `file`)
