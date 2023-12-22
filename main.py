@@ -26,10 +26,10 @@ def main():
     pygame.init()
     pygame.display.set_mode(flags=pygame.HIDDEN)
     # Raise errors if required arguments are not specified
-    if args.source is None:
-        raise ValueError("Source must be specified")
     if args.charcount is None:
         raise ValueError("Character count must be specified")
+    if args.source is None:
+        raise ValueError("Source must be specified")
     if args.fontname is None:
         raise ValueError("Font name must be specified")
     if args.fontsize is None:
