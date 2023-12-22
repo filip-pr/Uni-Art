@@ -30,9 +30,24 @@ To run Uni-Art one needs some non-standard libraries. To install those simply us
 ## User guide
 
 ### Running of the program
-After the installation everything is quite simple, just put all the files from this repository into a folder and run `main.py`.
+After the installation everything is quite simple, just put all the files from this repository into a folder and run it.
+
+#### Running with GUI
+Run with `python main.py`.
 A window named Uni-Art should appear, from there it should be quite straight forward. Just set your font, choose an image or a video you want to convert,
 choose the destination, character count and in case of video conversion the FPS and whether the converted video should have the original audio. After that simply click render and once the rendering is done click the Show/Play button. If you already have a converted file and you just want to show/play it, just select it and click Show/Play.
+
+#### Running in console (only supports image conversion)
+Run with arguments `python main.py <arguments>`.
+- `-m <mode>` mode can be gui, file or terminal (gui does the same thing as running without any arguments)
+- `-cc <char count>` number of character the image should have
+- `-s <source file>` source file
+- `-d <destination file>` destination file (only necessary when outputing to a file (mode is `file`)
+- `-fn <font name>` font name
+- `-fs <font size>` font size
+- `-b` if used the font will be bold
+- `-i` if used the font will be italic
+- `-c <char range>...` used to specify char set, after `-c` any amount (but at least one) of `char ranges` can be specified, all of them will be combined to make the used char set, each char range must be in fomat `star`-`end` where `start` and `end` are hexadecimal numbers and 0x0<=`start`<=`end`<=0x10FFFF
 
 ### Possible issues
 `Image or video has distorted characters or weird artifacts on the screen:`
