@@ -302,7 +302,8 @@ class AppGUI:
                         ],
                         initialdir=self.render_input_path.get(),
                         initialfile=self.render_input_path.get()
-                        .split("/")[-1].split("\\")[-1] # splitting the path by / or \
+                        .split("/")[-1]
+                        .split("\\")[-1]  # splitting the path by / or \
                         .split(".")[0],
                     ),
                 ),
@@ -630,7 +631,12 @@ class AppGUI:
                 self.char_video = CharVideo(path)
                 self.loaded_char_media_type = "video"
         except (OSError, ValueError):
-            self.char_file_status_label.config(text="Unable to open selected file")
+            self.char_file_status_label.config(
+                text=(
+                    "Unable to open selected file, "
+                    + "this might be because the file is corrupted or that it uses a missing font"
+                )
+            )
             return
         self.char_file_show_button.config(state=tk.NORMAL)
         self.char_file_info_label.config(text=f"Char file: {path.split('/')[-1]}")
@@ -663,7 +669,7 @@ class AppGUI:
                 self.char_file_show_button.config(state=tk.DISABLED)
                 self.render_char_file_button.config(state=tk.DISABLED)
                 self.char_file_path_button.config(state=tk.DISABLED)
-                
+
                 for status in CharVideo.render(
                     self.loaded_media_path,
                     render_dest_path,

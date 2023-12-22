@@ -83,12 +83,20 @@ class CharImage:
         image_height += image_height % 2
         return image_width, image_height
 
+    def chars_to_text(self) -> str:
+        """Converts the chars list to text."""
+        return "\n".join(
+            "".join(chr(char_index) for char_index in row) for row in self.chars
+        )
+
     def chars_to_bytes(self) -> bytes:
         """Converts the chars list to bytes."""
         char_image_bytes = b""
         for row in self.chars:
             for char_index in row:
-                char_image_bytes += char_index.to_bytes(UNICODE_CHAR_BYTES, byteorder=BYTE_ORDER)
+                char_image_bytes += char_index.to_bytes(
+                    UNICODE_CHAR_BYTES, byteorder=BYTE_ORDER
+                )
         return char_image_bytes
 
     @staticmethod
@@ -103,7 +111,8 @@ class CharImage:
                         * (i * columns + j) : UNICODE_CHAR_BYTES
                         * (i * columns + j + 1)
                     ],
-                byteorder=BYTE_ORDER)
+                    byteorder=BYTE_ORDER,
+                )
                 for j in range(columns)
             ]
             for i in range(rows)
@@ -137,7 +146,9 @@ class CharImage:
         """Loads a CharImage from a file."""
         try:
             with open(file_name, "rb") as rf:
-                font_bytes_length = int.from_bytes(rf.read(INT_BYTES), byteorder=BYTE_ORDER)
+                font_bytes_length = int.from_bytes(
+                    rf.read(INT_BYTES), byteorder=BYTE_ORDER
+                )
                 font = Font.from_bytes(rf.read(font_bytes_length))
                 rows = int.from_bytes(rf.read(INT_BYTES), byteorder=BYTE_ORDER)
                 columns = int.from_bytes(rf.read(INT_BYTES), byteorder=BYTE_ORDER)
