@@ -22,6 +22,7 @@ def main():
         root = Tk()
         AppGUI(root)
         root.mainloop()
+        exit()
     pygame.init()
     pygame.display.set_mode(flags=pygame.HIDDEN)
     # Raise errors if required arguments are not specified
