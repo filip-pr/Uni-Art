@@ -1,7 +1,7 @@
-# UNI-ART Documentation
+# Uni-Art Documentation
 
 ## About
-This document contains the description of the inner workings of Uni-Art project.
+This document contains the programming documentation for the Uni-Art project. It will hopefully help to clarify how the things work in the background, but for the more specific 'documentation' it is always better to look at the code.
 
 ## Modules
 
@@ -26,3 +26,9 @@ This document contains the description of the inner workings of Uni-Art project.
 ### main.py
 `main.py` module is the main module of the application, nothing more, nothing less.
 
+## Common parts
+### NumPy
+`NumPy` doesn't really get mentioned anywhere else, because I think the usage reason is usually pretty clear.
+
+### Binary data conversions
+All the classes (`Font`, `CharImage`, `CharVideo`) have some for of class to bytes conversion without pickle-ing, only preserving the necessary information for their reconstruction, this is something that is not necessary in the hindsight, but is something my past self thought would be nice.
