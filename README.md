@@ -27,6 +27,9 @@ To run Uni-Art one needs some non-standard libraries. To install those simply us
 - `pip install pygame`
 - `pip install moviepy`
 
+You might also need to install ffmpeg:
+- https://ffmpeg.org/
+
 ## User guide
 
 ### Running of the program
