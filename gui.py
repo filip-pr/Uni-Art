@@ -125,7 +125,7 @@ class AppGUI:
             self.master.iconbitmap("icon.ico")
         # setting icon on linux is a bit more complicated
         # so we'll just skip it
-        self.master.resizable(False, False)
+        self.master.resizable(True, True)
         bg_color = "#EFEFEF"
         self.master.configure(background=bg_color)
         style = ttk.Style()
