@@ -1,2 +1,7 @@
 .vscode/settings.json
 .venv/
+output/
+test_fonts/
+test_images/
+display_test.html
+test.py
