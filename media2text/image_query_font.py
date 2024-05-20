@@ -1,5 +1,6 @@
 """Module for font allowing for color to character queries"""
 
+import sys
 from pathlib import Path
 
 from fontTools.ttLib import TTFont
@@ -32,15 +33,15 @@ class ImageQueryFont:
         self.kerning = (
             None if not use_kerning else self._create_kerning_dict(font, rev_cmap)
         )
-        self.is_monospace = True if force_monospace else self._is_monospace(font, cmap)
-        self.char_height = self._units_to_pixels(
-            font["hhea"].ascender - font["hhea"].descender
-        )
+        self.char_height = font["hhea"].ascender - font["hhea"].descender
         layout_engine = (
             ImageFont.Layout.RAQM if features.check("raqm") else ImageFont.Layout.BASIC
         )
         if use_ligatures and layout_engine == ImageFont.Layout.BASIC:
-            print("Warning: Ligatures are not supported without RAQM layout engine.")
+            print(
+                "Warning: Ligatures are not supported without RAQM layout engine.",
+                file=sys.stderr,
+            )
         if use_ligatures:
             ligature_dict, rev_ligature_dict = self._create_ligature_dicts(
                 font, rev_cmap
@@ -53,16 +54,26 @@ class ImageQueryFont:
             encoding="unic",
             layout_engine=layout_engine,
         )
-        self.max_char_width = self._units_to_pixels(
-            max(font["hmtx"].metrics[glyph][0] for glyph in cmap.values())
-        )
-        averages_dict = self._create_averages_dict(
-            font, draw_font, text_color, bg_color, use_embedded_color, cmap, rev_cmap
+        self.max_char_width = max(
+            font["hmtx"].metrics[glyph][0] for glyph in cmap.values()
         )
         self.char_widths = {
-            char: self._units_to_pixels(font["hmtx"].metrics[glyph][0])
-            for char, glyph in cmap.items()
+            char: font["hmtx"].metrics[glyph][0] for char, glyph in cmap.items()
         }
+        self.is_monospace = (
+            True if force_monospace else self._is_monospace(cmap, rev_cmap)
+        )
+        averages_dict = self._create_averages_dict(
+            draw_font, text_color, bg_color, use_embedded_color, cmap, rev_cmap
+        )
+        # recalculate char_widths after removing characters with width 0
+        self.char_widths = {
+            char: font["hmtx"].metrics[glyph][0] for char, glyph in cmap.items()
+        }
+        self.max_char_width = max(width for width in self.char_widths.values())
+        self.average_char_width = sum(list(self.char_widths.values())) / len(
+            self.char_widths
+        )
         self.kdtree, self.index_char_dict = self._create_kdtree_and_index_char_dict(
             averages_dict
         )
@@ -107,10 +118,10 @@ class ImageQueryFont:
                 kerning[rev_cmap[left] + rev_cmap[right]] = value
         return kerning
 
-    def _is_monospace(self, font: TTFont, cmap: dict[str, str]) -> bool:
+    def _is_monospace(self, cmap: dict[str, str], rev_cmap: dict[str, str]) -> bool:
         widths = set()
         for glyph in cmap.values():
-            width = font["hmtx"].metrics[glyph][0]
+            width = self.char_widths[rev_cmap[glyph]]
             widths.add(width)
         if 0 in widths:
             widths.remove(0)
@@ -151,7 +162,6 @@ class ImageQueryFont:
 
     def _create_averages_dict(
         self,
-        font: TTFont,
         draw_font: ImageFont.FreeTypeFont,
         text_color: tuple[int, int, int],
         bg_color: tuple[int, int, int],
@@ -159,12 +169,12 @@ class ImageQueryFont:
         cmap: dict[str, str],
         rev_cmap: dict[str, str],
     ) -> dict[str, np.ndarray]:
-        glyph_height = self.char_height
-        glyph_width = self.max_char_width
+        glyph_height = self._units_to_pixels(self.char_height)
+        glyph_width = self._units_to_pixels(self.max_char_width)
         averages_dict = {}
         for char, glyph in list(cmap.items()):
             if not self.is_monospace:
-                glyph_width = self._units_to_pixels(font["hmtx"].metrics[glyph][0])
+                glyph_width = self._units_to_pixels(self.char_widths[char])
             if glyph_width == 0:
                 cmap.pop(char)
                 rev_cmap.pop(glyph)
@@ -245,6 +255,14 @@ class ImageQueryFont:
                     col_offsets[i] += char_width
         return "\n".join(result)
 
+    def get_font_aspect_ratio(self) -> float:
+        """Returns the aspect ratio of the font.
+
+        Returns:
+            float: Aspect ratio of the font.
+        """
+        return self.average_char_width / self.char_height
+
     def get_new_image_size(
         self,
         original_size: tuple[int, int],
@@ -263,7 +281,7 @@ class ImageQueryFont:
         Returns:
             tuple[int, int]: Shape that the image should be resized to (width, height).
         """
-        row_height = round(row_spacing * self.char_height)
+        row_height = round(row_spacing * self._units_to_pixels(self.char_height))
         original_aspect_ratio = original_size[0] / original_size[1]
         if self.is_monospace:
             font_aspect_ratio = self.max_char_width / row_height
