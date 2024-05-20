@@ -33,7 +33,9 @@ class ImageQueryFont:
             None if not use_kerning else self._create_kerning_dict(font, rev_cmap)
         )
         self.is_monospace = True if force_monospace else self._is_monospace(font, cmap)
-        self.unit_char_height = font["hhea"].ascender - font["hhea"].descender
+        self.char_height = self._units_to_pixels(
+            font["hhea"].ascender - font["hhea"].descender
+        )
         layout_engine = (
             ImageFont.Layout.RAQM if features.check("raqm") else ImageFont.Layout.BASIC
         )
@@ -51,14 +53,15 @@ class ImageQueryFont:
             encoding="unic",
             layout_engine=layout_engine,
         )
-        self.max_unit_char_width = max(
-            font["hmtx"].metrics[glyph][0] for glyph in cmap.values()
+        self.max_char_width = self._units_to_pixels(
+            max(font["hmtx"].metrics[glyph][0] for glyph in cmap.values())
         )
         averages_dict = self._create_averages_dict(
             font, draw_font, text_color, bg_color, use_embedded_color, cmap, rev_cmap
         )
-        self.unit_char_widths = {
-            char: font["hmtx"].metrics[glyph][0] for char, glyph in cmap.items()
+        self.char_widths = {
+            char: self._units_to_pixels(font["hmtx"].metrics[glyph][0])
+            for char, glyph in cmap.items()
         }
         self.kdtree, self.index_char_dict = self._create_kdtree_and_index_char_dict(
             averages_dict
@@ -156,8 +159,8 @@ class ImageQueryFont:
         cmap: dict[str, str],
         rev_cmap: dict[str, str],
     ) -> dict[str, np.ndarray]:
-        glyph_height = self._units_to_pixels(self.unit_char_height)
-        glyph_width = self._units_to_pixels(self.max_unit_char_width)
+        glyph_height = self.char_height
+        glyph_width = self.max_char_width
         averages_dict = {}
         for char, glyph in list(cmap.items()):
             if not self.is_monospace:
@@ -179,6 +182,7 @@ class ImageQueryFont:
             averages_dict[char] = colors_average
         min_color = np.min(list(averages_dict.values()), axis=0)
         max_color = np.max(list(averages_dict.values()), axis=0)
+        # normalizing the colors to 0-255 range
         for char, average in averages_dict.items():
             averages_dict[char] = (average - min_color) / (max_color - min_color) * 255
         return averages_dict
@@ -186,10 +190,105 @@ class ImageQueryFont:
     def _create_kdtree_and_index_char_dict(
         self, averages_dict: dict[str, np.ndarray]
     ) -> tuple[cKDTree, dict[int, str]]:
-        averages_array = np.empty((len(averages_dict), 3))
+        averages_array = np.empty((len(averages_dict) + 1, 3))
         index_char_dict = {}
         for i, (char, average) in enumerate(averages_dict.items()):
             averages_array[i] = average
             index_char_dict[i] = char
+        # dummy value for out of bounds queries
+        averages_array[len(averages_dict)] = (-255, -255, -255)
+        index_char_dict[len(averages_dict)] = ""
         kdtree = KDTree(averages_array)
         return kdtree, index_char_dict
+
+    def _calculate_offset_colors(
+        self, image: np.ndarray, start_offsets: np.ndarray
+    ) -> np.ndarray:
+        line_width = image.shape[1] * self.char_height
+        offset_colors = np.empty((image.shape[0], 3))
+        for i, row in enumerate(image):
+            if start_offsets[i] >= line_width:
+                offset_colors[i] = (-255, -255, -255)
+                continue
+            offset_colors[i] = row[start_offsets[i] // self.char_height]
+        return offset_colors
+
+    def _query_monospace(self, image: np.ndarray, distance_metric: int) -> str:
+        cols = image.shape[1]
+        image = image.reshape(-1, 3)
+        _, indices = self.kdtree.query(image, p=distance_metric)
+        indices = indices.reshape(-1, cols)
+        return "\n".join(
+            "".join(self.index_char_dict[i] for i in row) for row in indices
+        )
+
+    def _query_non_monospace(self, image: np.ndarray, distance_metric: int) -> str:
+        col_offsets = np.zeros(image.shape[0], dtype=np.int32)
+        finished = False
+        result = ["" for _ in range(image.shape[0])]
+        while not finished:
+            finished = True
+            averages = self._calculate_offset_colors(image, col_offsets)
+            _, indices = self.kdtree.query(averages, p=distance_metric)
+            for i, result_index in enumerate(indices):
+                result_char = self.index_char_dict[result_index]
+                result[i] += result_char
+                if result_index != len(self.index_char_dict) - 1:
+                    finished = False
+                    char_width = self.char_widths[result_char]
+                    if (
+                        self.kerning
+                        and len(result[i]) > 1
+                        and result[i][-2:] in self.kerning
+                    ):
+                        char_width += self.kerning[result[i][-2:]]
+                    col_offsets[i] += char_width
+        return "\n".join(result)
+
+    def get_new_image_size(
+        self,
+        original_size: tuple[int, int],
+        num_rows: int,
+        row_spacing: float = 1.0,
+    ) -> tuple[int, int]:
+        """Returns the shape that the image should be resized to in order to have the desired
+        number of rows and columns while preserving the original aspect ratio in this font.
+
+        Args:
+            original_size (tuple[int, int]): Original size of the image (width, height).
+            num_rows (int): Number of rows that the image should have.
+            row_spacing (float, optional): Spacing between rows, to get the best results
+            some experimentation might be necessary. Defaults to 1.0.
+
+        Returns:
+            tuple[int, int]: Shape that the image should be resized to (width, height).
+        """
+        row_height = round(row_spacing * self.char_height)
+        original_aspect_ratio = original_size[0] / original_size[1]
+        if self.is_monospace:
+            font_aspect_ratio = self.max_char_width / row_height
+            new_aspect_ratio = original_aspect_ratio / font_aspect_ratio
+            num_cols = round(num_rows * new_aspect_ratio)
+            return num_cols, num_rows
+        return round(num_rows * original_aspect_ratio * row_spacing), num_rows
+
+    def query(self, image: np.ndarray, distance_metric: str = "manhattan") -> str:
+        """Makes a string representation of the image using the font.
+
+        Args:
+            image (np.ndarray): Source image.
+            distance_metric (str, optional): Type of distance metric to be used.
+            Defaults to manhattan.
+
+        Returns:
+            str: A string representation of the image using the font.
+        """
+        distance_metrics = {"manhattan": 1, "euclidean": 2}
+        if distance_metric not in distance_metrics:
+            raise ValueError(
+                f"Invalid distance metric, use one of: {' '.join(distance_metrics.keys())}"
+            )
+        metric_index = distance_metrics[distance_metric]
+        if self.is_monospace:
+            return self._query_monospace(image, metric_index)
+        return self._query_non_monospace(image, metric_index)
