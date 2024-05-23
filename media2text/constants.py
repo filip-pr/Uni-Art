@@ -16,3 +16,6 @@ match platform:
         SYSTEM_FONT_PATH = ""
 
 LOOKUP_TYPE_LIGATURE = 4
+
+RENDER_TEMP_DIR = "render_temp"
+PROCESS_REFRESH_RATE = 0.1  # seconds
