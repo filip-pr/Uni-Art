@@ -1,11 +1,10 @@
 """Module for converting an image to text using a font."""
 
-import math
-
 import numpy as np
 from PIL import Image
 
 from .image_query_font import ImageQueryFont
+from .helpers import estimate_new_size
 
 
 def image_convert(
@@ -30,11 +29,7 @@ def image_convert(
     """
     if isinstance(image, str):
         image = Image.open(image)
-    font_aspect_ratio = font.get_font_aspect_ratio()
-    original_aspect_ratio = image.size[0] / image.size[1]
-    new_aspect_ratio = original_aspect_ratio / font_aspect_ratio
-    height = round(math.sqrt(num_characters * new_aspect_ratio) / new_aspect_ratio)
-    new_size = font.get_new_image_size(image.size, height, row_spacing)
+    new_size = estimate_new_size(font, image.size, num_characters, row_spacing)
     image = image.resize(new_size)
     image_array = np.array(image)
     result = font.query(image_array, distance_metric)
