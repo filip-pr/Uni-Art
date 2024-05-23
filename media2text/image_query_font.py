@@ -26,8 +26,8 @@ class ImageQueryFont:
         force_monospace: bool = False,
         font_render_size: int = 100,
     ):
-        font_path = self._get_font_path(font_path)
-        font = TTFont(font_path)
+        self.font_path = self._get_font_path(font_path)
+        font = TTFont(self.font_path)
         self.ppem_ratio = font_render_size / font["head"].unitsPerEm
         cmap, rev_cmap = self._create_cmaps(font, charset)
         self.kerning = (
@@ -49,7 +49,7 @@ class ImageQueryFont:
             cmap = ligature_dict | cmap
             rev_cmap = rev_ligature_dict | rev_cmap
         draw_font = ImageFont.truetype(
-            font_path,
+            self.font_path,
             font_render_size,
             encoding="unic",
             layout_engine=layout_engine,
@@ -77,9 +77,6 @@ class ImageQueryFont:
         self.kdtree, self.index_char_dict = self._create_kdtree_and_index_char_dict(
             averages_dict
         )
-
-    def _units_to_pixels(self, units: int) -> int:
-        return round(units * self.ppem_ratio)
 
     def _get_font_path(self, font_path: str) -> str:
         if Path(font_path).is_file():
@@ -169,12 +166,12 @@ class ImageQueryFont:
         cmap: dict[str, str],
         rev_cmap: dict[str, str],
     ) -> dict[str, np.ndarray]:
-        glyph_height = self._units_to_pixels(self.char_height)
-        glyph_width = self._units_to_pixels(self.max_char_width)
+        glyph_height = self.units_to_pixels(self.char_height)
+        glyph_width = self.units_to_pixels(self.max_char_width)
         averages_dict = {}
         for char, glyph in list(cmap.items()):
             if not self.is_monospace:
-                glyph_width = self._units_to_pixels(self.char_widths[char])
+                glyph_width = self.units_to_pixels(self.char_widths[char])
             if glyph_width == 0:
                 cmap.pop(char)
                 rev_cmap.pop(glyph)
@@ -226,7 +223,7 @@ class ImageQueryFont:
     def _query_monospace(self, image: np.ndarray, distance_metric: int) -> str:
         cols = image.shape[1]
         image = image.reshape(-1, 3)
-        _, indices = self.kdtree.query(image, p=distance_metric)
+        _, indices = self.kdtree.query(image, p=distance_metric, workers=-1)
         indices = indices.reshape(-1, cols)
         return "\n".join(
             "".join(self.index_char_dict[i] for i in row) for row in indices
@@ -255,6 +252,17 @@ class ImageQueryFont:
                     col_offsets[i] += char_width
         return "\n".join(result)
 
+    def units_to_pixels(self, units: int) -> int:
+        """Returns the number of pixels that correspond to the given number of font units.
+
+        Args:
+            units (int): Number of font units.
+
+        Returns:
+            int: Number of pixels.
+        """
+        return round(units * self.ppem_ratio)
+
     def get_font_aspect_ratio(self) -> float:
         """Returns the aspect ratio of the font.
 
@@ -263,7 +271,7 @@ class ImageQueryFont:
         """
         return self.average_char_width / self.char_height
 
-    def get_new_image_size(
+    def get_resize_size(
         self,
         original_size: tuple[int, int],
         num_rows: int,
@@ -281,14 +289,17 @@ class ImageQueryFont:
         Returns:
             tuple[int, int]: Shape that the image should be resized to (width, height).
         """
-        row_height = round(row_spacing * self._units_to_pixels(self.char_height))
+        num_rows = num_rows + 1 if num_rows % 2 == 1 else num_rows
+        row_height = round(row_spacing * self.char_height)
         original_aspect_ratio = original_size[0] / original_size[1]
+        num_cols = round(num_rows * original_aspect_ratio * row_spacing)
         if self.is_monospace:
             font_aspect_ratio = self.max_char_width / row_height
             new_aspect_ratio = original_aspect_ratio / font_aspect_ratio
             num_cols = round(num_rows * new_aspect_ratio)
-            return num_cols, num_rows
-        return round(num_rows * original_aspect_ratio * row_spacing), num_rows
+            return num_cols + 1 if num_cols % 2 == 1 else num_cols, num_rows
+        num_cols = num_cols + 1 if num_cols % 2 == 1 else num_cols
+        return num_cols, num_rows
 
     def query(self, image: np.ndarray, distance_metric: str = "manhattan") -> str:
         """Makes a string representation of the image using the font.
