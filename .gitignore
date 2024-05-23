@@ -5,3 +5,6 @@ test_fonts/
 test_images/
 display_test.html
 test.py
+templates/
+render_temp/
+media2text/__pycache__/
