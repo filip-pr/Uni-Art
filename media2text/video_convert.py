@@ -4,6 +4,7 @@ import time
 import os
 import subprocess
 import threading
+import queue
 from enum import Enum
 
 import cv2
@@ -40,7 +41,7 @@ class VideoChunk:
         self.ffmpeg_command = (
             f'ffmpeg -ss {start_time} -i "{video}" -vf "fps={frame_rate}, '
             + f'scale={new_size[0]}:{new_size[1]}:flags=lanczos" '
-            + f'-frames:v {frame_rate*length} -c:v libx264 -crf 0 -an {self.name}'
+            + f"-frames:v {frame_rate*length} -c:v libx264 -crf 0 -an {self.name}"
         )
         self.status = VideoChunkStatus.PENDING
 
@@ -191,7 +192,20 @@ class TextVideoPlayer:
         """
         self.video_chunk_handler.set_time(new_time)
 
-    def iter_frames(self):
+    def iter_frames(self, buffer_size: int = 100):
         """Iterate over the frames of the video and convert them to text."""
-        for frame in self.video_chunk_handler.iter_frames():
-            yield self.font.query(frame, self.distance_metric)
+        q = queue.Queue(buffer_size)
+        video_frame_generator = self.video_chunk_handler.iter_frames()
+
+        def buffer_frames():
+            while True:
+                if q.qsize() < buffer_size:
+                    frame = next(video_frame_generator)
+                    q.put(self.font.query(frame, self.distance_metric))
+                else:
+                    time.sleep(PROCESS_REFRESH_RATE)
+
+        threading.Thread(target=buffer_frames, daemon=True).start()
+        while True:
+            frame = q.get()
+            yield frame
