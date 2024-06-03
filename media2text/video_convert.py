@@ -36,10 +36,11 @@ class VideoChunk:
         frame_rate: int,
         new_size: tuple[int, int],
     ):
-        self.name = os.path.join(RENDER_TEMP_DIR, f"temp_{start_time}.mp4")
+        self.name = os.path.join(RENDER_TEMP_DIR, f"temp_{start_time}.mkv")
         self.ffmpeg_command = (
-            f"ffmpeg -ss {start_time} -i {video} -vf scale={new_size[0]}:{new_size[1]} "
-            + f"-frames:v {frame_rate*length} -r {frame_rate} -c:v libx264 -an {self.name}"
+            f'ffmpeg -ss {start_time} -i "{video}" -vf "fps={frame_rate}, '
+            + f'scale={new_size[0]}:{new_size[1]}:flags=lanczos" '
+            + f'-frames:v {frame_rate*length} -c:v libx264 -crf 0 -an {self.name}'
         )
         self.status = VideoChunkStatus.PENDING
 
@@ -60,7 +61,8 @@ class VideoChunk:
                 check=True,
             )
         except subprocess.CalledProcessError as e:
-            os.remove(self.name)
+            if os.path.exists(self.name):
+                os.remove(self.name)
             print(e)
             return
         self.status = VideoChunkStatus.READY
@@ -85,11 +87,6 @@ class VideoChunkHandler:
         self.frame_rate = frame_rate
         self.new_size = new_size
         self.chunk_length = chunk_length
-        video_capture = cv2.VideoCapture(video)
-        self.video_length = video_capture.get(
-            cv2.CAP_PROP_FRAME_COUNT
-        ) / video_capture.get(cv2.CAP_PROP_FPS)
-        video_capture.release()
         self.time = 0
         self.curr_chunk: VideoChunk = None
         self.next_chunk: VideoChunk = None
@@ -137,20 +134,22 @@ class VideoChunkHandler:
 
     def iter_frames(self):
         """Iterate over the frames of the video."""
+        end = False
         while True:
             while self.curr_chunk.status != VideoChunkStatus.READY:
                 time.sleep(PROCESS_REFRESH_RATE)
             video_capture = cv2.VideoCapture(self.curr_chunk.name)
+            end = True
             while True:
                 success, frame = video_capture.read()
                 if not success:
                     break
+                end = False
                 yield frame
             video_capture.release()
             self._next_chunk()
-            if self.time >= self.video_length:
-                while True:
-                    yield frame
+            while end:
+                yield frame
 
 
 class TextVideoPlayer:

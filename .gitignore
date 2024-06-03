@@ -3,8 +3,10 @@
 output/
 test_fonts/
 test_images/
-display_test.html
-test.py
+test_videos/
 templates/
+static/
 render_temp/
 media2text/__pycache__/
+display_test.html
+test.py

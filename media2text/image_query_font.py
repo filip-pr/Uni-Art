@@ -91,8 +91,10 @@ class ImageQueryFont:
         font_cmap = font.getBestCmap()
         if charset is None:
             charset = set(chr(idx) for idx in font_cmap.keys())
-        if "\n" in charset:
-            charset.remove("\n")
+        # removing problematic characters
+        for character in ["\n", "\r", "\t", "\x0b", "\x0c"]:
+            if character in charset:
+                charset.remove(character)
         rev_cmap = {}
         for idx, glyph in font_cmap.items():
             if chr(idx) not in charset:
