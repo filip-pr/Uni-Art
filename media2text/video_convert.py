@@ -97,6 +97,7 @@ class VideoChunkHandler:
 
     def __del__(self):
         self.stop = True
+        ready_render_temp()
 
     def _process_chunks(self):
         while not self.stop:
