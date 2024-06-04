@@ -8,7 +8,7 @@ import numpy as np
 from PIL import Image
 
 from .image_query_font import ImageQueryFont
-from .constants import RENDER_TEMP_DIR
+from .constants import SYSTEM_FONT_PATH, RENDER_TEMP_DIR
 
 
 def estimate_new_size(
@@ -46,6 +46,7 @@ def ready_render_temp():
         except PermissionError:
             pass
 
+
 def benchmark(
     font: ImageQueryFont, image: Image.Image | str, num_characters: int, repeats: int
 ) -> float:
@@ -76,3 +77,16 @@ def benchmark(
             repeat_count -= 1
             stopwatch = time.time()
     return average / repeats
+
+
+def get_system_font_paths() -> list[str]:
+    """Get a list of system font path.
+
+    Returns:
+        list[str]: List of system font paths.
+    """
+    fonts = []
+    for file in os.listdir(SYSTEM_FONT_PATH):
+        if file.endswith(".ttf"):
+            fonts.append(os.path.join(SYSTEM_FONT_PATH, file))
+    return fonts
