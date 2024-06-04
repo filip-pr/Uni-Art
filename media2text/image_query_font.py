@@ -227,8 +227,9 @@ class ImageQueryFont:
         image = image.reshape(-1, 3)
         _, indices = self.kdtree.query(image, p=distance_metric, workers=-1)
         indices = indices.reshape(-1, cols)
+        # using \u200a to prevent accidental ligatures
         return "\n".join(
-            "".join(self.index_char_dict[i] for i in row) for row in indices
+            "\u200a".join(self.index_char_dict[i] for i in row) for row in indices
         )
 
     def _query_non_monospace(self, image: np.ndarray, distance_metric: int) -> str:
@@ -241,7 +242,8 @@ class ImageQueryFont:
             _, indices = self.kdtree.query(averages, p=distance_metric)
             for i, result_index in enumerate(indices):
                 result_char = self.index_char_dict[result_index]
-                result[i] += result_char
+                # using \u200a to prevent accidental ligatures
+                result[i] += result_char + "\u200a"
                 if result_index != len(self.index_char_dict) - 1:
                     finished = False
                     char_width = self.char_widths[result_char]
