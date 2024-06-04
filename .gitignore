@@ -4,7 +4,6 @@ output/
 test_fonts/
 test_images/
 test_videos/
-templates/
 static/
 render_temp/
 media2text/__pycache__/

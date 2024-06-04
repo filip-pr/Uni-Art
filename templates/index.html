@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Uni-Art player</title>
+    <style>
+        div
+        {
+            margin-bottom: 20px;
+            margin-left: 20px;
+        }
+
+        div > *
+        {
+            margin-bottom: 15px;
+        }
+
+        button
+        {
+            padding: 2px 50px;
+            cursor: pointer;
+        }
+
+                label
+        {
+            margin-left: 20px;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        .hide
+        {
+            display: none !important;
+        }
+
+        .options
+        {
+        }
+    </style>
+    <script> 
+        function toggle_hide() {
+            document.querySelectorAll('.options').forEach(item => {
+                item.classList.toggle('hide');
+            })
+        }
+    </script>
+</head>
+<body style="font-family: Arial, sans-serif">
+    <h1>Uni-Art player</h1>
+
+    <div class="options">
+        <h3>Font options</h3>
+
+        <label for="font">Font:</label>
+        <select id="font" style="width: 200px;">
+        </select>
+
+        <label for="charset">Charset:</label>
+        <input type="input" id="charset" value="unicode" style="width: 200px;">
+
+        <label for="text_color">Text color:</label>
+        <input type="color" id="text_color" value="#000000" style="width: 25px;">
+
+        <label for="bg_color">Background color:</label>
+        <input type="color" id="bg_color" value="#FFFFFF" style="width: 25px;">
+        <br>
+        <label for="embedded_color">Color:</label>
+        <input type="checkbox" id="embedded_color" checked>
+
+        <label for="kerning">Kerning:</label>
+        <input type="checkbox" id="kerning" checked>
+
+        <label for="ligatures">Ligatures:</label>
+        <input type="checkbox" id="ligatures">
+
+        <label for="force_monospace">Force monospace:</label>
+        <input type="checkbox" id="force_monospace">
+
+        <label for="render_size">Font render size:</label>
+        <input type="number" id="render_size" value="100" style="width: 50px;">
+        <br>
+        <label for="upload_font">Upload a custom font:</label>
+        <input type="file" id="upload_font" accept=".ttf, .otf" style="width: 200px;">
+        <button id="upload_button">Upload</button>
+    </div>
+
+    <div class="options">
+        <h3>Render options</h3>
+
+        <label for="source">Source:</label>
+        <input type="file" id="source" style="width: 200px;">
+
+        <label for="character_count">Character count:</label>
+        <input type="number" id="character_count" value="5000" style="width: 60px;">
+
+        <label for="row_spacing">Row spacing:</label>
+        <input type="number" id="row_spacing" value="1.0" step="0.01" style="width: 50px;">
+        <br>
+        <label for="distance_metric">Distance metric:</label>
+        <select id="distance_metric" style="width: 150px;">
+            <option value="manhattan">Manhattan</option>
+            <option value="euclidean">Euclidean</option>
+        </select>
+
+        <label for="frame_rate">Frame rate:</label>
+        <input type="number" id="frame_rate" class="video_setting" value="30" style="width: 50px;">
+
+        <label for="chunk_length">Chunk length:</label>
+        <input type="number" id="chunk_length" class="video_setting" value="5" style="width: 30px;">
+    </div>
+
+    <div>
+        <button onclick="toggle_hide()">Show/Hide options</button>
+
+        <h3>Player controls</h3>
+
+        <button id="show_button">Show text</button>
+
+        <label for="text_size">Text size:</label>
+        <input type="range" id="text_size" min="1" max="50" step="1" style="width: 150px">
+        
+        <label for="play_time">Jump to time:</label>
+        <input type="number" id="play_time" value="0" style="width: 50px;">
+        <button id="time_jump_button" style="margin-left: 10px">Jump</button>
+        <br>
+        <span id="console">console messages will be here</span>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
