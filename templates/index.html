@@ -4,42 +4,48 @@
     <meta charset="UTF-8">
     <title>Uni-Art player</title>
     <style>
-        div
-        {
+        div {
             margin-bottom: 20px;
             margin-left: 20px;
         }
 
-        div > *
-        {
+        div > * {
             margin-bottom: 15px;
         }
 
-        button
-        {
+        button {
             padding: 2px 50px;
             cursor: pointer;
         }
 
-                label
-        {
+        label {
             margin-left: 20px;
             margin-right: 10px;
             font-weight: bold;
         }
 
-        .hide
-        {
+        .hide {
             display: none !important;
         }
 
-        .options
-        {
+        .options {
         }
+
+        .hint{
+            font-style: italic;
+            font-size: 12px;
+        }
+
     </style>
     <script> 
-        function toggle_hide() {
+        function optionsToggleHide() {
             document.querySelectorAll('.options').forEach(item => {
+                item.classList.toggle('hide');
+            })
+        }
+
+        function hintToggleHide() {
+            document.querySelectorAll('.hint').forEach(item => {
                 item.classList.toggle('hide');
             })
         }
@@ -51,79 +57,118 @@
     <div class="options">
         <h3>Font options</h3>
 
-        <label for="font">Font:</label>
-        <select id="font" style="width: 200px;">
+        <label for="font-path">Font:</label>
+        <select id="font-path" style="width: 200px;">
         </select>
 
-        <label for="charset">Charset:</label>
-        <input type="input" id="charset" value="unicode" style="width: 200px;">
+        <label for="font-charset">Charset:</label>
+        <input type="input" id="font-charset" value="unicode" style="width: 200px;">
 
-        <label for="text_color">Text color:</label>
-        <input type="color" id="text_color" value="#000000" style="width: 25px;">
+        <label for="font-text-color">Text color:</label>
+        <input type="color" id="font-text-color" value="#000000" style="width: 25px;">
 
-        <label for="bg_color">Background color:</label>
-        <input type="color" id="bg_color" value="#FFFFFF" style="width: 25px;">
+        <label for="font-bg-color">Background color:</label>
+        <input type="color" id="font-bg-color" value="#FFFFFF" style="width: 25px;">
         <br>
-        <label for="embedded_color">Color:</label>
-        <input type="checkbox" id="embedded_color" checked>
+        <label for="font-embedded-color">Color:</label>
+        <input type="checkbox" id="font-embedded-color" checked>
 
-        <label for="kerning">Kerning:</label>
-        <input type="checkbox" id="kerning" checked>
+        <label for="font-kerning">Kerning:</label>
+        <input type="checkbox" id="font-kerning" checked>
 
-        <label for="ligatures">Ligatures:</label>
-        <input type="checkbox" id="ligatures">
+        <label for="font-ligatures">Ligatures:</label>
+        <input type="checkbox" id="font-ligatures">
 
-        <label for="force_monospace">Force monospace:</label>
-        <input type="checkbox" id="force_monospace">
+        <label for="font-force-monospace">Force monospace:</label>
+        <input type="checkbox" id="font-force-monospace">
 
-        <label for="render_size">Font render size:</label>
-        <input type="number" id="render_size" value="100" style="width: 50px;">
+        <label for="font-render-size">Font render size:</label>
+        <input type="number" id="font-render-size" min="1" value="100" style="width: 50px;">
         <br>
-        <label for="upload_font">Upload a custom font:</label>
-        <input type="file" id="upload_font" accept=".ttf, .otf" style="width: 200px;">
-        <button id="upload_button">Upload</button>
+        <label for="font-upload-font">Upload a custom font:</label>
+        <input type="file" id="font-upload-font" accept=".ttf, .otf" style="width: 200px;">
+        <button id="font-upload-button">Upload</button>
+        
+    <span class="hint hide" ><br>
+        <b>Font:</b> Font to be used for rendering<br>
+        <b>Charset:</b> Either 'unicode', 'ascii' or string containing characters allowed to be used<br>
+        <b>Text color</b> Desired color of rendered text<br>
+        <b>Background color:</b>: Desired background color for rendered text<br>
+        <b>Color:</b> Whether to use color in font characters (emoji etc.)<br>
+        <b>Kerning:</b> Whether to use kerning<br>
+        <b>Ligatures:</b> Whether to use ligatures (not recommended for some fonts since not all ligatures supported by font are supported by browser)<br>
+        <b>Force monospace:</b> Whether to force rendering font as monospace (usually not recommended)<br>
+        <b>Font render size:</b> Size at which the font will be rendered with (recommended to not go bellow 20, some fonts might require specific value to work) <br>
+        <b>Upload a custom font:</b> Uploaded font will be added to Font dropdown<br>
+    </span>
     </div>
 
     <div class="options">
         <h3>Render options</h3>
 
-        <label for="source">Source:</label>
-        <input type="file" id="source" style="width: 200px;">
+        <label for="render-source">Source:</label>
+        <input type="file" id="render-source" style="width: 200px;">
 
-        <label for="character_count">Character count:</label>
-        <input type="number" id="character_count" value="5000" style="width: 60px;">
+        <label for="render-character-count">Character count:</label>
+        <input type="number" id="render-character-count" value="5000" style="width: 60px;">
 
-        <label for="row_spacing">Row spacing:</label>
-        <input type="number" id="row_spacing" value="1.0" step="0.01" style="width: 50px;">
+        <label for="render-row-spacing">Row spacing:</label>
+        <input type="number" id="render-row-spacing" value="1.0" step="0.01" style="width: 50px;">
         <br>
-        <label for="distance_metric">Distance metric:</label>
-        <select id="distance_metric" style="width: 150px;">
+        <label for="render-distance-metric">Distance metric:</label>
+        <select id="render-distance-metric" style="width: 150px;">
             <option value="manhattan">Manhattan</option>
             <option value="euclidean">Euclidean</option>
         </select>
 
-        <label for="frame_rate">Frame rate:</label>
-        <input type="number" id="frame_rate" class="video_setting" value="30" style="width: 50px;">
+        <label for="render-frame-rate">Frame rate:</label>
+        <input type="number" id="render-frame-rate" class="video-setting" value="30" style="width: 50px;">
 
-        <label for="chunk_length">Chunk length:</label>
-        <input type="number" id="chunk_length" class="video_setting" value="5" style="width: 30px;">
+        <label for="render-chunk-length">Chunk length:</label>
+        <input type="number" id="render-chunk-length" class="video-setting" value="5" style="width: 30px;">
+    
+        <span class="hint hide" ><br>
+            <b>Source:</b> Source file to render<br>
+            <b>Character count:</b> Aproximate number of (visible) characters to be used<br>
+            <b>Row spacing:</b> Aditional distance between rows expected while rendering<br>
+            <b>Distance metric:</b> Distance metric to be used when quering for color-closest characters<br>
+            <b>Frame rate:</b> Frame rate used for rendering (video only)<br>
+            <b>Chunk length:</b> Length of chunks in which the video is rendered, smaller values mean less waiting when jumping through video, but possible performance issues (video only)<br>
+        </span>
     </div>
 
     <div>
-        <button onclick="toggle_hide()">Show/Hide options</button>
+        <label style="margin-left: 0px">Player controls:</label>
 
-        <h3>Player controls</h3>
+        <button id="player-start-button">Start</button>
 
-        <button id="show_button">Show text</button>
+        <label for="player-text-size">Text size:</label>
+        <input type="range" id="player-text-size" min="1" max="50" step="1" style="width: 150px">
 
-        <label for="text_size">Text size:</label>
-        <input type="range" id="text_size" min="1" max="50" step="1" style="width: 150px">
+        <label for="player-current-time">Current time (s):</label>
+        <span id="player-current-time">0</span>
+
+        <label for="player-jump-time">Jump to time (s):</label>
+        <input type="number" id="player-jump-time" value="0" style="width: 50px;">
+        <button id="player-jump-time-button" style="margin-left: 10px">Jump</button>
+
+        <button onclick="optionsToggleHide()" style="margin-left: 10px">Show/Hide options</button>
+        <button onclick="hintToggleHide()" style="margin-left: 10px">Show/Hide hints</button>
         
-        <label for="play_time">Jump to time:</label>
-        <input type="number" id="play_time" value="0" style="width: 50px;">
-        <button id="time_jump_button" style="margin-left: 10px">Jump</button>
+        <span class="hint hide"><br>
+            <b>Start (button):</b> Press to start displaying the image or playing the video<br>
+            <b>Text size:</b> Text size of rendered media, if the "image" is too big try lowering this value<br>
+            <b>Current time (s):</b> Current time since the start of the video in seconds (video only)<br>
+            <b>Jump to time (s):</b> After pressing the Jump button, player will jump to the selected time of the video (video only)<br>
+            <b>Keyboard controls:</b> Space to pause/unpause the video, A and D (or arrows) to jump back/forward 10s, if the controls are not working make sure that no text box is selected (video only)<br>
+        </span>
+        
         <br>
-        <span id="console">console messages will be here</span>
+        <span id="info-console"></span>
+    </div>
+
+    <div>
+        <span id="display"></span>
     </div>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
