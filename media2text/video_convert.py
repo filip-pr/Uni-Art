@@ -7,12 +7,17 @@ import threading
 import queue
 from enum import Enum
 
-import numpy as np
 import cv2
 
 from .image_query_font import ImageQueryFont
 from .helpers import estimate_new_size, ready_render_temp
-from .constants import RENDER_TEMP_DIR, PROCESS_REFRESH_RATE
+from .constants import (
+    RENDER_TEMP_DIR,
+    PROCESS_REFRESH_RATE,
+    TEXT_VIDEO_MAGIC_NUMBER,
+    BYTE_ORDER,
+    INT_SIZE,
+)
 
 
 # because cv2 is a C module...
@@ -142,7 +147,6 @@ class VideoChunkHandler:
 
     def iter_frames(self):
         """Iterate over the frames of the video."""
-        last_frame = np.zeros((self.new_size[1], self.new_size[0], 3), np.uint8)
         while True:
             while self.curr_chunk.status != VideoChunkStatus.READY:
                 time.sleep(PROCESS_REFRESH_RATE)
@@ -151,13 +155,11 @@ class VideoChunkHandler:
                 success, frame = video_capture.read()
                 if not success:
                     break
-                last_frame = frame
                 yield frame
             video_capture.release()
             self._next_chunk()
-            while self.next_chunk_time >= self.video_length:
-                print(self.next_chunk_time)
-                yield last_frame
+            if self.next_chunk_time >= self.video_length:
+                break
 
 
 class TextVideoPlayer:
@@ -173,6 +175,17 @@ class TextVideoPlayer:
         distance_metric: str = "manhattan",
         chunk_length: int = 5,
     ):
+        self.from_render = False
+        with open(video, "rb") as file:
+            magic_number = int.from_bytes(file.read(INT_SIZE), BYTE_ORDER)
+            if magic_number == TEXT_VIDEO_MAGIC_NUMBER:
+                self.from_render = True
+                self.frame_rate = int.from_bytes(file.read(INT_SIZE), BYTE_ORDER)
+                self.frame_count = int.from_bytes(file.read(INT_SIZE), BYTE_ORDER)
+                self.frames_offset = 3 * INT_SIZE + self.frame_count * INT_SIZE
+        if self.from_render:
+            self.file_pointer = open(video, "rb")
+            return
         self.font = font
         self.video = video
         self.frame_rate = frame_rate
@@ -191,16 +204,29 @@ class TextVideoPlayer:
             video, frame_rate, self.new_size, chunk_length
         )
 
+    def _set_time_from_video(self, new_time: int):
+        self.video_chunk_handler.set_time(new_time)
+
+    def _set_time_from_render(self, new_time: int):
+        frame_number = new_time * self.frame_rate
+        self.file_pointer.seek(3 * INT_SIZE + frame_number * INT_SIZE)
+        frame_offset = int.from_bytes(self.file_pointer.read(INT_SIZE), BYTE_ORDER)
+        self.file_pointer.seek(frame_offset)
+
     def set_time(self, new_time: int):
         """Set the time of the video.
 
         Args:
             new_time (int): New time in seconds.
         """
-        self.video_chunk_handler.set_time(new_time)
+        if new_time < 0 or new_time >= self.video_chunk_handler.video_length:
+            return
+        if not self.from_render:
+            self._set_time_from_video(new_time)
+        else:
+            self._set_time_from_render(new_time)
 
-    def iter_frames(self, buffer_size: int = 100):
-        """Iterate over the frames of the video and convert them to text."""
+    def _iter_frames_from_video(self, buffer_size: int):
         q = queue.Queue(buffer_size)
         video_frame_generator = self.video_chunk_handler.iter_frames()
 
@@ -214,5 +240,27 @@ class TextVideoPlayer:
 
         threading.Thread(target=buffer_frames, daemon=True).start()
         while True:
-            frame = q.get()
-            yield frame
+            try:
+                frame = q.get(block=True, timeout=5)
+                yield frame
+            except queue.Empty:
+                break
+
+    def _iter_frames_from_render(self):
+        while True:
+            frame_size_bytes = self.file_pointer.read(INT_SIZE)
+            if not frame_size_bytes:
+                break
+            frame_size = int.from_bytes(frame_size_bytes, BYTE_ORDER)
+            frame_bytes = self.file_pointer.read(frame_size)
+            yield frame_bytes.decode("utf-8")
+
+    def iter_frames(self, buffer_size: int = 100):
+        """Iterate over the frames of the video and convert them to text."""
+        generator = (
+            self._iter_frames_from_video(buffer_size)
+            if not self.from_render
+            else self._iter_frames_from_render()
+        )
+        for item in generator:
+            yield item

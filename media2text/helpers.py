@@ -8,7 +8,16 @@ import numpy as np
 from PIL import Image
 
 from .image_query_font import ImageQueryFont
-from .constants import SYSTEM_FONT_PATH, RENDER_TEMP_DIR
+from .constants import (
+    SYSTEM_FONT_PATH,
+    RENDER_TEMP_DIR,
+    TEXT_IMAGE_MAGIC_NUMBER,
+    TEXT_VIDEO_MAGIC_NUMBER,
+    BYTE_ORDER,
+    INT_SIZE,
+)
+
+from .video_convert import TextVideoPlayer
 
 
 def estimate_new_size(
@@ -87,6 +96,54 @@ def get_system_font_paths() -> list[str]:
     """
     fonts = []
     for file in os.listdir(SYSTEM_FONT_PATH):
-        if file.endswith(".ttf"):
+        if file.endswith((".ttf", ".otf")):
             fonts.append(os.path.join(SYSTEM_FONT_PATH, file))
     return fonts
+
+
+def save_text_image(image: str, path: str):
+    """Function to save an image to a file.
+
+    Args:
+        image (str): Image to save.
+        path (str): Path to save the image.
+    """
+    with open(path, "wb") as file:
+        file.write(TEXT_IMAGE_MAGIC_NUMBER.to_bytes(INT_SIZE, BYTE_ORDER))
+        file.write(image.encode("utf-8"))
+
+
+def save_text_video(video_player: TextVideoPlayer, path: str):
+    """Function to save a video to a file.
+
+    Args:
+        video_player (TextVideoPlayer): Video player to save.
+        path (str): Path to save the video.
+    """
+    video_player.set_time(0)
+    frame_count = 0
+    with open(path + ".tmp", "wb") as file:
+        for frame in video_player.iter_frames():
+            frame_bytes = frame.encode("utf-8")
+            file.write(len(frame_bytes).to_bytes(INT_SIZE, BYTE_ORDER))
+            file.write(frame_bytes)
+            frame_count += 1
+    with open(path, "wb") as file:
+        file.write(TEXT_VIDEO_MAGIC_NUMBER.to_bytes(INT_SIZE, BYTE_ORDER))
+        file.write(video_player.frame_rate.to_bytes(INT_SIZE, BYTE_ORDER))
+        file.write(frame_count.to_bytes(INT_SIZE, BYTE_ORDER))
+        frames_offset = 3 * INT_SIZE + frame_count * INT_SIZE
+        with open(path + ".tmp", "rb") as tmp_file:
+            for _ in range(frame_count):
+                offset = tmp_file.tell() + frames_offset
+                file.write(offset.to_bytes(INT_SIZE, BYTE_ORDER))
+                frame_size = int.from_bytes(tmp_file.read(INT_SIZE), BYTE_ORDER)
+                tmp_file.seek(frame_size, 1)
+            tmp_file.seek(0)
+            for _ in range(frame_count):
+                frame_size = int.from_bytes(tmp_file.read(INT_SIZE), BYTE_ORDER)
+                frame = tmp_file.read(frame_size)
+                file.write(frame_size.to_bytes(INT_SIZE, BYTE_ORDER))
+                file.write(frame)
+            file.write(tmp_file.read())
+        os.remove(path + ".tmp")

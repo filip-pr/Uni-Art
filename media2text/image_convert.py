@@ -4,6 +4,7 @@ import numpy as np
 from PIL import Image
 
 from .image_query_font import ImageQueryFont
+from .constants import TEXT_IMAGE_MAGIC_NUMBER, BYTE_ORDER, INT_SIZE
 from .helpers import estimate_new_size
 
 
@@ -28,6 +29,10 @@ def image_convert(
         str: String representation of the image.
     """
     if isinstance(image, str):
+        with open(image, "rb") as file:
+            magic_number = int.from_bytes(file.read(INT_SIZE), BYTE_ORDER)
+            if magic_number == TEXT_IMAGE_MAGIC_NUMBER:
+                return file.read().decode("utf-8")
         image = Image.open(image)
     new_size = estimate_new_size(font, image.size, num_characters, row_spacing)
     image = image.resize(new_size)

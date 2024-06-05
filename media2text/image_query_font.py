@@ -8,7 +8,12 @@ from PIL import Image, ImageDraw, ImageFont, features
 import numpy as np
 from scipy.spatial import KDTree, cKDTree
 
-from .constants import SYSTEM_FONT_PATH, BLACK, WHITE, LOOKUP_TYPE_LIGATURE
+from .constants import (
+    SYSTEM_FONT_PATH,
+    BLACK,
+    WHITE,
+    LOOKUP_TYPE_LIGATURE,
+)
 
 
 class ImageQueryFont:
