@@ -162,8 +162,8 @@ class VideoChunkHandler:
                 break
 
 
-class TextVideoPlayer:
-    """Class for 'playing' a video as text."""
+class TextVideo:
+    """Class for converting video to text."""
 
     def __init__(
         self,
@@ -264,3 +264,38 @@ class TextVideoPlayer:
         )
         for item in generator:
             yield item
+
+    def save(self, path: str):
+        """Function to save a video to a file.
+
+        Args:
+            video_player (TextVideoPlayer): Video player to save.
+            path (str): Path to save the video.
+        """
+        self.set_time(0)
+        frame_count = 0
+        with open(path + ".tmp", "wb") as file:
+            for frame in self.iter_frames():
+                frame_bytes = frame.encode("utf-8")
+                file.write(len(frame_bytes).to_bytes(INT_SIZE, BYTE_ORDER))
+                file.write(frame_bytes)
+                frame_count += 1
+        with open(path, "wb") as file:
+            file.write(TEXT_VIDEO_MAGIC_NUMBER.to_bytes(INT_SIZE, BYTE_ORDER))
+            file.write(self.frame_rate.to_bytes(INT_SIZE, BYTE_ORDER))
+            file.write(frame_count.to_bytes(INT_SIZE, BYTE_ORDER))
+            frames_offset = 3 * INT_SIZE + frame_count * INT_SIZE
+            with open(path + ".tmp", "rb") as tmp_file:
+                for _ in range(frame_count):
+                    offset = tmp_file.tell() + frames_offset
+                    file.write(offset.to_bytes(INT_SIZE, BYTE_ORDER))
+                    frame_size = int.from_bytes(tmp_file.read(INT_SIZE), BYTE_ORDER)
+                    tmp_file.seek(frame_size, 1)
+                tmp_file.seek(0)
+                for _ in range(frame_count):
+                    frame_size = int.from_bytes(tmp_file.read(INT_SIZE), BYTE_ORDER)
+                    frame = tmp_file.read(frame_size)
+                    file.write(frame_size.to_bytes(INT_SIZE, BYTE_ORDER))
+                    file.write(frame)
+                file.write(tmp_file.read())
+            os.remove(path + ".tmp")
