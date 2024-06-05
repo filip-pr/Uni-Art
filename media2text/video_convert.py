@@ -7,6 +7,7 @@ import threading
 import queue
 from enum import Enum
 
+import numpy as np
 import cv2
 
 from .image_query_font import ImageQueryFont
@@ -88,9 +89,14 @@ class VideoChunkHandler:
         self.frame_rate = frame_rate
         self.new_size = new_size
         self.chunk_length = chunk_length
-        self.time = 0
+        self.next_chunk_time = 0
         self.curr_chunk: VideoChunk = None
         self.next_chunk: VideoChunk = None
+        video_capture = cv2.VideoCapture(video)
+        self.video_length = int(
+            video_capture.get(cv2.CAP_PROP_FRAME_COUNT)
+            / video_capture.get(cv2.CAP_PROP_FPS)
+        )
         self.stop = False
         threading.Thread(target=self._process_chunks, daemon=True).start()
         self.set_time(0)
@@ -109,10 +115,10 @@ class VideoChunkHandler:
         while self.next_chunk.status != VideoChunkStatus.READY:
             time.sleep(PROCESS_REFRESH_RATE)
         self.curr_chunk = self.next_chunk
-        self.time += self.chunk_length
+        self.next_chunk_time += self.chunk_length
         self.next_chunk = VideoChunk(
             self.video,
-            self.time,
+            self.next_chunk_time,
             self.chunk_length,
             self.frame_rate,
             self.new_size,
@@ -124,10 +130,10 @@ class VideoChunkHandler:
         Args:
             new_time (int): New time in seconds.
         """
-        self.time = new_time
+        self.next_chunk_time = new_time
         self.next_chunk = VideoChunk(
             self.video,
-            self.time,
+            self.next_chunk_time,
             self.chunk_length,
             self.frame_rate,
             self.new_size,
@@ -136,22 +142,22 @@ class VideoChunkHandler:
 
     def iter_frames(self):
         """Iterate over the frames of the video."""
-        end = False
+        last_frame = np.zeros((self.new_size[1], self.new_size[0], 3), np.uint8)
         while True:
             while self.curr_chunk.status != VideoChunkStatus.READY:
                 time.sleep(PROCESS_REFRESH_RATE)
             video_capture = cv2.VideoCapture(self.curr_chunk.name)
-            end = True
             while True:
                 success, frame = video_capture.read()
                 if not success:
                     break
-                end = False
+                last_frame = frame
                 yield frame
             video_capture.release()
             self._next_chunk()
-            while end:
-                yield frame
+            while self.next_chunk_time >= self.video_length:
+                print(self.next_chunk_time)
+                yield last_frame
 
 
 class TextVideoPlayer:
