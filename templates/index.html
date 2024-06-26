@@ -3,24 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <title>Uni-Art player</title>
+    <link rel="icon" href="static/favicon.ico" type="image/x-icon">
     <style>
         div {
             margin-bottom: 20px;
             margin-left: 20px;
         }
 
-        div > * {
+        div > input, select, label, span {
             margin-bottom: 15px;
+            margin-left: 20px;
+            margin-right: 10px;
         }
 
         button {
             padding: 2px 50px;
-            cursor: pointer;
         }
 
         label {
-            margin-left: 20px;
-            margin-right: 10px;
             font-weight: bold;
         }
 
@@ -37,19 +37,7 @@
         }
 
     </style>
-    <script> 
-        function optionsToggleHide() {
-            document.querySelectorAll('.options').forEach(item => {
-                item.classList.toggle('hide');
-            })
-        }
-
-        function hintToggleHide() {
-            document.querySelectorAll('.hint').forEach(item => {
-                item.classList.toggle('hide');
-            })
-        }
-    </script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </head>
 <body style="font-family: Arial, sans-serif">
     <h1>Uni-Art player</h1>
@@ -59,6 +47,7 @@
 
         <label for="font-path">Font:</label>
         <select id="font-path" style="width: 200px;">
+            <option value="Custom font">Custom font</option>
         </select>
 
         <label for="font-charset">Charset:</label>
@@ -85,9 +74,9 @@
         <label for="font-render-size">Font render size:</label>
         <input type="number" id="font-render-size" min="1" value="100" style="width: 50px;">
         <br>
-        <label for="font-upload-font">Upload a custom font:</label>
-        <input type="file" id="font-upload-font" accept=".ttf, .otf" style="width: 200px;">
-        <button id="font-upload-button">Upload</button>
+        <button id="font-set-button">Set font</button>
+        <span style="font-weight: bold">Selected font:</span>
+        <span id="selected-font">None</span>
         
     <span class="hint hide" ><br>
         <b>Font:</b> Font to be used for rendering<br>
@@ -98,35 +87,41 @@
         <b>Kerning:</b> Whether to use kerning<br>
         <b>Ligatures:</b> Whether to use ligatures (not recommended for some fonts since not all ligatures supported by font are supported by browser)<br>
         <b>Force monospace:</b> Whether to force rendering font as monospace (usually not recommended)<br>
-        <b>Font render size:</b> Size at which the font will be rendered with (recommended to not go bellow 20, some fonts might require specific value to work) <br>
-        <b>Upload a custom font:</b> Uploaded font will be added to Font dropdown<br>
+        <b>Font render size:</b> Size at which the font will be rendered with (recommended to not go bellow 20, also.. some fonts might require specific value to work)<br>
+        <b>Set font (button):</b> Set currently used font by pressing this button<br>
     </span>
     </div>
 
     <div class="options">
-        <h3>Render options</h3>
+        <h3>Media options</h3>
 
-        <label for="render-source">Source:</label>
-        <input type="file" id="render-source" style="width: 200px;">
+        <label for="media-source">Source:</label>
+        <select id="media-source" style="width: 200px;">
+            <option value="Custom media">Custom media</option>
+        </select>
 
-        <label for="render-character-count">Character count:</label>
-        <input type="number" id="render-character-count" value="5000" style="width: 60px;">
+        <label for="media-character-count">Character count:</label>
+        <input type="number" id="media-character-count" value="5000" style="width: 60px;">
 
-        <label for="render-row-spacing">Row spacing:</label>
-        <input type="number" id="render-row-spacing" value="1.0" step="0.01" style="width: 50px;">
+        <label for="media-row-spacing">Row spacing:</label>
+        <input type="number" id="media-row-spacing" value="1.0" step="0.01" style="width: 50px;">
         <br>
-        <label for="render-distance-metric">Distance metric:</label>
-        <select id="render-distance-metric" style="width: 150px;">
+        <label for="media-distance-metric">Distance metric:</label>
+        <select id="media-distance-metric" style="width: 150px;">
             <option value="manhattan">Manhattan</option>
             <option value="euclidean">Euclidean</option>
         </select>
 
-        <label for="render-frame-rate">Frame rate:</label>
-        <input type="number" id="render-frame-rate" class="video-setting" value="30" style="width: 50px;">
+        <label for="media-frame-rate">Frame rate:</label>
+        <input type="number" id="media-frame-rate" class="video-setting" value="30" style="width: 50px;">
 
-        <label for="render-chunk-length">Chunk length:</label>
-        <input type="number" id="render-chunk-length" class="video-setting" value="5" style="width: 30px;">
-    
+        <label for="media-chunk-length">Chunk length:</label>
+        <input type="number" id="media-chunk-length" class="video-setting" value="5" style="width: 30px;">
+        <br>
+        <button id="media-set-button">Set media</button>
+        <span style="font-weight: bold">Selected media:</span>
+        <span id="selected-media">None</span>
+
         <span class="hint hide" ><br>
             <b>Source:</b> Source file to render<br>
             <b>Character count:</b> Aproximate number of (visible) characters to be used<br>
@@ -134,35 +129,31 @@
             <b>Distance metric:</b> Distance metric to be used when quering for color-closest characters<br>
             <b>Frame rate:</b> Frame rate used for rendering (video only)<br>
             <b>Chunk length:</b> Length of chunks in which the video is rendered, smaller values mean less waiting when jumping through video, but possible performance issues (video only)<br>
+            <b>Set media (button):</b> Set currently used media by pressing this button<br>
         </span>
     </div>
 
     <div>
-        <label style="margin-left: 0px">Player controls:</label>
-
-        <button id="player-start-button">Start</button>
-
         <label for="player-text-size">Text size:</label>
         <input type="range" id="player-text-size" min="1" max="50" step="1" style="width: 150px">
 
-        <label for="player-current-time">Current time (s):</label>
+        <span style="font-weight: bold">Current time (s):</span>
         <span id="player-current-time">0</span>
 
         <label for="player-jump-time">Jump to time (s):</label>
         <input type="number" id="player-jump-time" value="0" style="width: 50px;">
         <button id="player-jump-time-button" style="margin-left: 10px">Jump</button>
 
-        <button onclick="optionsToggleHide()" style="margin-left: 10px">Show/Hide options</button>
-        <button onclick="hintToggleHide()" style="margin-left: 10px">Show/Hide hints</button>
+        <button id="options-toggle-button" style="margin-left: 10px">Show/Hide options</button>
+        <button id="hint-toggle-button" style="margin-left: 10px">Show/Hide hints</button>
         
         <span class="hint hide"><br>
-            <b>Start (button):</b> Press to start displaying the image or playing the video<br>
             <b>Text size:</b> Text size of rendered media, if the "image" is too big try lowering this value<br>
             <b>Current time (s):</b> Current time since the start of the video in seconds (video only)<br>
             <b>Jump to time (s):</b> After pressing the Jump button, player will jump to the selected time of the video (video only)<br>
             <b>Keyboard controls:</b> Space to pause/unpause the video, A and D (or arrows) to jump back/forward 10s, if the controls are not working make sure that no text box is selected (video only)<br>
         </span>
-        
+    
         <br>
         <span id="info-console"></span>
     </div>
@@ -171,6 +162,5 @@
         <span id="display"></span>
     </div>
 
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

@@ -1,11 +1,10 @@
-.vscode/settings.json
+.vscode/
 .venv/
+.render_temp/
 output/
-test_fonts/
-test_images/
-test_videos/
-static/
-render_temp/
+fonts/
+media/
 media2text/__pycache__/
 display_test.html
+benchmark.txt
 test.py
