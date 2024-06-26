@@ -35,6 +35,8 @@ class ImageQueryFont:
         font = TTFont(self.font_path)
         self.ppem_ratio = font_render_size / font["head"].unitsPerEm
         cmap, rev_cmap = self._create_cmaps(font, charset)
+        if len(cmap) < 2:
+            raise ValueError("Font does not contain enough characters.")
         self.kerning = (
             None if not use_kerning else self._create_kerning_dict(font, rev_cmap)
         )
@@ -82,6 +84,7 @@ class ImageQueryFont:
         self.kdtree, self.index_char_dict = self._create_kdtree_and_index_char_dict(
             averages_dict
         )
+        self.num_characters = len(self.index_char_dict)
 
     def _get_font_path(self, font_path: str) -> str:
         if Path(font_path).is_file():
@@ -196,6 +199,8 @@ class ImageQueryFont:
             averages_dict[char] = colors_average
         min_color = np.min(list(averages_dict.values()), axis=0)
         max_color = np.max(list(averages_dict.values()), axis=0)
+        if (max_color == min_color).any():
+            min_color += 0.00001 # to prevent zero division
         # normalizing the colors to 0-255 range
         for char, average in averages_dict.items():
             averages_dict[char] = (average - min_color) / (max_color - min_color) * 255

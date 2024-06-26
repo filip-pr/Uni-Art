@@ -82,7 +82,7 @@ def query_benchmark(
     return average / repeats
 
 
-def get_system_font_paths() -> list[str]:
+def get_system_fonts_paths() -> list[str]:
     """Get a list of system font path.
 
     Returns:
@@ -90,8 +90,7 @@ def get_system_font_paths() -> list[str]:
     """
     fonts = []
     for file in os.listdir(SYSTEM_FONT_PATH):
-        if file.endswith((".ttf", ".otf")):
-            fonts.append(os.path.join(SYSTEM_FONT_PATH, file))
+        file_path = os.path.join(SYSTEM_FONT_PATH, file)
+        if os.path.isfile(file_path) and file_path.endswith((".ttf", ".otf")):
+            fonts.append(file_path)
     return fonts
-
-
