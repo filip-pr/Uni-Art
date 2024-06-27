@@ -108,6 +108,8 @@ def set_media():
         frame_rate = int(media_data["frameRate"])
         chunk_length = int(media_data["chunkLength"])
         buffer_size = int(media_data["bufferSize"])
+        if isinstance(TextMedia.media, TextVideo):
+            TextMedia.media.stop()
         try:
             new_media = TextImage(
                 TextMedia.font,
@@ -116,7 +118,6 @@ def set_media():
                 row_spacing,
                 distance_metric,
             )
-            TextMedia.media = new_media
             detected_type = "image"
         except UnidentifiedImageError:
             new_media = TextVideo(
@@ -129,8 +130,8 @@ def set_media():
                 chunk_length,
                 buffer_size,
             )
-            TextMedia.media = new_media
             detected_type = "video"
+        TextMedia.media = new_media
     except Exception as e:  # pylint: disable=broad-except
         return jsonify(success=False, error=str(e))
     return jsonify(success=True, detectedType=detected_type)

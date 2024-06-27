@@ -5,12 +5,13 @@ import os
 import subprocess
 import threading
 import queue
+import tempfile
 from enum import Enum
 
 import cv2
 
 from .image_query_font import ImageQueryFont
-from .helpers import estimate_new_size, ready_render_temp
+from .helpers import estimate_new_size
 from .constants import (
     RENDER_TEMP_DIR,
     PROCESS_REFRESH_RATE,
@@ -30,6 +31,7 @@ class VideoChunkStatus(Enum):
     PENDING = 0
     RUNNING = 1
     READY = 2
+    DELETED = 3
 
 
 class VideoChunk:
@@ -43,11 +45,14 @@ class VideoChunk:
         frame_rate: int,
         new_size: tuple[int, int],
     ):
-        self.name = os.path.join(RENDER_TEMP_DIR, f"temp_{start_time}.mkv")
+        chunk_file = tempfile.NamedTemporaryFile(
+            dir=RENDER_TEMP_DIR, prefix=f"s{start_time}_", suffix=".mkv", delete=False
+        )
+        self.name = chunk_file.name
         self.ffmpeg_command = (
-            f'ffmpeg -ss {start_time} -i "{video}" -vf "fps={frame_rate}, '
+            f'ffmpeg -ss {start_time} -i "{video}" -y -vf "fps={frame_rate}, '
             + f'scale={new_size[0]}:{new_size[1]}:flags=lanczos" '
-            + f"-frames:v {frame_rate*length} -c:v libx264 -crf 0 -an {self.name}"
+            + f'-frames:v {frame_rate*length} -c:v libx264 -crf 0 -an "{self.name}"'
         )
         self.status = VideoChunkStatus.PENDING
 
@@ -57,6 +62,8 @@ class VideoChunk:
         Raises:
             ValueError: If FFmpeg fails to process the video chunk.
         """
+        if self.status == VideoChunkStatus.DELETED:
+            return
         if self.status == VideoChunkStatus.READY:
             return
         self.status = VideoChunkStatus.RUNNING
@@ -74,9 +81,9 @@ class VideoChunk:
             return
         self.status = VideoChunkStatus.READY
 
-    def __del__(self):
-        if os.path.exists(self.name):
-            os.remove(self.name)
+    def delete(self):
+        """'Delete' the video chunk file."""
+        self.status = VideoChunkStatus.DELETED
 
 
 class VideoChunkHandler:
@@ -89,7 +96,6 @@ class VideoChunkHandler:
         new_size: tuple[int, int],
         chunk_length: int,
     ):
-        ready_render_temp()
         self.video = video
         self.frame_rate = frame_rate
         self.new_size = new_size
@@ -102,16 +108,12 @@ class VideoChunkHandler:
             video_capture.get(cv2.CAP_PROP_FRAME_COUNT)
             / video_capture.get(cv2.CAP_PROP_FPS)
         )
-        self.stop = False
+        self._stopped = False
         threading.Thread(target=self._process_chunks, daemon=True).start()
         self.set_time(0)
 
-    def __del__(self):
-        self.stop = True
-        ready_render_temp()
-
     def _process_chunks(self):
-        while not self.stop:
+        while not self._stopped:
             if self.next_chunk is not None:
                 self.next_chunk.process()
             time.sleep(PROCESS_REFRESH_RATE)
@@ -119,6 +121,8 @@ class VideoChunkHandler:
     def _next_chunk(self):
         while self.next_chunk.status != VideoChunkStatus.READY:
             time.sleep(PROCESS_REFRESH_RATE)
+        if self.curr_chunk is not None:
+            self.curr_chunk.delete()
         self.curr_chunk = self.next_chunk
         self.next_chunk_time += self.chunk_length
         self.next_chunk = VideoChunk(
@@ -129,13 +133,27 @@ class VideoChunkHandler:
             self.new_size,
         )
 
+    def stop(self):
+        """Stop the video chunk handler (cannot be resumed)."""
+        if self._stopped:
+            raise ValueError("Video chunk handler has already been stopped")
+        if self.curr_chunk is not None:
+            self.curr_chunk.delete()
+        if self.next_chunk is not None:
+            self.next_chunk.delete()
+        self._stopped = True
+
     def set_time(self, new_time: int):
         """Set the time of the video for next chunk.
 
         Args:
             new_time (int): New time in seconds.
         """
+        if self._stopped:
+            raise ValueError("Video chunk handler has already been stopped")
         self.next_chunk_time = new_time
+        if self.next_chunk is not None:
+            self.next_chunk.delete()
         self.next_chunk = VideoChunk(
             self.video,
             self.next_chunk_time,
@@ -147,8 +165,12 @@ class VideoChunkHandler:
 
     def iter_frames(self):
         """Iterate over the frames of the video."""
+        if self._stopped:
+            raise ValueError("Video chunk handler has already been stopped")
         while True:
             while self.curr_chunk.status != VideoChunkStatus.READY:
+                if self.curr_chunk.status == VideoChunkStatus.DELETED:
+                    return
                 time.sleep(PROCESS_REFRESH_RATE)
             video_capture = cv2.VideoCapture(self.curr_chunk.name)
             while True:
@@ -210,6 +232,7 @@ class TextVideo:
             if not self.from_render
             else self._iter_frames_from_render()
         )
+        self._stopped = False
 
     def _set_time_from_video(self, new_time: int):
         self.video_chunk_handler.set_time(new_time)
@@ -226,6 +249,8 @@ class TextVideo:
         Args:
             new_time (int): New time in seconds.
         """
+        if self._stopped:
+            raise ValueError("Video player has been stopped")
         if new_time < 0 or new_time >= self.video_chunk_handler.video_length:
             return
         if not self.from_render:
@@ -267,6 +292,14 @@ class TextVideo:
             frame_bytes = self.file_pointer.read(frame_size)
             yield frame_bytes.decode("utf-8")
 
+    def stop(self):
+        """Stop the video player (cannot be resumed)."""
+        if self._stopped:
+            raise ValueError("Video player has already been stopped")
+        if self.from_render:
+            self.file_pointer.close()
+        self.video_chunk_handler.stop()
+        self._stopped = True
 
     def save(self, path: str):
         """Function to save a video to a file.
@@ -275,6 +308,8 @@ class TextVideo:
             video_player (TextVideoPlayer): Video player to save.
             path (str): Path to save the video.
         """
+        if self._stopped:
+            raise ValueError("Video player has been stopped")
         self.set_time(0)
         frame_count = 0
         with open(path + ".tmp", "wb") as file:
