@@ -169,11 +169,12 @@ class TextVideo:
         self,
         font: ImageQueryFont,
         video: str,
-        frame_rate: int,
-        num_characters_per_frame: int,
+        frame_rate: int = 30,
+        num_characters_per_frame: int = 5000,
         row_spacing: float = 1.0,
         distance_metric: str = "manhattan",
         chunk_length: int = 5,
+        buffer_size: int = 100,
     ):
         self.from_render = False
         with open(video, "rb") as file:
@@ -191,6 +192,7 @@ class TextVideo:
         self.frame_rate = frame_rate
         self.distance_metric = distance_metric
         self.chunk_length = chunk_length
+        self.buffer_size = buffer_size
         video_capture = cv2.VideoCapture(video)
         original_size = (
             int(video_capture.get(cv2.CAP_PROP_FRAME_WIDTH)),
@@ -202,6 +204,11 @@ class TextVideo:
         )
         self.video_chunk_handler = VideoChunkHandler(
             video, frame_rate, self.new_size, chunk_length
+        )
+        self.frame_generator = (
+            self._iter_frames_from_video()
+            if not self.from_render
+            else self._iter_frames_from_render()
         )
 
     def _set_time_from_video(self, new_time: int):
@@ -225,14 +232,19 @@ class TextVideo:
             self._set_time_from_video(new_time)
         else:
             self._set_time_from_render(new_time)
+        self.frame_generator = (
+            self._iter_frames_from_video()
+            if not self.from_render
+            else self._iter_frames_from_render()
+        )
 
-    def _iter_frames_from_video(self, buffer_size: int):
-        q = queue.Queue(buffer_size)
+    def _iter_frames_from_video(self):
+        q = queue.Queue(self.buffer_size)
         video_frame_generator = self.video_chunk_handler.iter_frames()
 
         def buffer_frames():
             while True:
-                if q.qsize() < buffer_size:
+                if q.qsize() < self.buffer_size:
                     frame = next(video_frame_generator)
                     q.put(self.font.query(frame, self.distance_metric))
                 else:
@@ -255,15 +267,6 @@ class TextVideo:
             frame_bytes = self.file_pointer.read(frame_size)
             yield frame_bytes.decode("utf-8")
 
-    def iter_frames(self, buffer_size: int = 100):
-        """Iterate over the frames of the video and convert them to text."""
-        generator = (
-            self._iter_frames_from_video(buffer_size)
-            if not self.from_render
-            else self._iter_frames_from_render()
-        )
-        for item in generator:
-            yield item
 
     def save(self, path: str):
         """Function to save a video to a file.
@@ -275,7 +278,7 @@ class TextVideo:
         self.set_time(0)
         frame_count = 0
         with open(path + ".tmp", "wb") as file:
-            for frame in self.iter_frames():
+            for frame in self.frame_generator:
                 frame_bytes = frame.encode("utf-8")
                 file.write(len(frame_bytes).to_bytes(INT_SIZE, BYTE_ORDER))
                 file.write(frame_bytes)

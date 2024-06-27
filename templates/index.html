@@ -10,7 +10,7 @@
             margin-left: 20px;
         }
 
-        div > input, select, label, span {
+        div > input, select, label, span, button {
             margin-bottom: 15px;
             margin-left: 20px;
             margin-right: 10px;
@@ -32,6 +32,7 @@
         }
 
         .hint{
+            margin-left: 0px;
             font-style: italic;
             font-size: 12px;
         }
@@ -77,19 +78,19 @@
         <button id="font-set-button">Set font</button>
         <span style="font-weight: bold">Selected font:</span>
         <span id="selected-font">None</span>
-        
-    <span class="hint hide" ><br>
-        <b>Font:</b> Font to be used for rendering<br>
-        <b>Charset:</b> Either 'unicode', 'ascii' or string containing characters allowed to be used<br>
-        <b>Text color</b> Desired color of rendered text<br>
-        <b>Background color:</b>: Desired background color for rendered text<br>
-        <b>Color:</b> Whether to use color in font characters (emoji etc.)<br>
-        <b>Kerning:</b> Whether to use kerning<br>
-        <b>Ligatures:</b> Whether to use ligatures (not recommended for some fonts since not all ligatures supported by font are supported by browser)<br>
-        <b>Force monospace:</b> Whether to force rendering font as monospace (usually not recommended)<br>
-        <b>Font render size:</b> Size at which the font will be rendered with (recommended to not go bellow 20, also.. some fonts might require specific value to work)<br>
-        <b>Set font (button):</b> Set currently used font by pressing this button<br>
-    </span>
+        <br>
+        <span class="hint hide" >
+            <b>Font:</b> Font to be used for rendering<br>
+            <b>Charset:</b> Either 'unicode', 'ascii' or string containing characters allowed to be used<br>
+            <b>Text color</b> Desired color of rendered text<br>
+            <b>Background color:</b>: Desired background color for rendered text<br>
+            <b>Color:</b> Whether to use color in font characters (emoji etc.)<br>
+            <b>Kerning:</b> Whether to use kerning<br>
+            <b>Ligatures:</b> Whether to use ligatures (not recommended for some fonts since not all ligatures supported by font are supported by browser)<br>
+            <b>Force monospace:</b> Whether to force rendering font as monospace (usually not recommended)<br>
+            <b>Font render size:</b> Size at which the font will be rendered with (recommended to not go bellow 20, also.. some fonts might require specific value to work)<br>
+            <b>Set font (button):</b> Set currently used font by pressing this button<br>
+        </span>
     </div>
 
     <div class="options">
@@ -117,12 +118,15 @@
 
         <label for="media-chunk-length">Chunk length:</label>
         <input type="number" id="media-chunk-length" class="video-setting" value="5" style="width: 30px;">
+
+        <label for="media-buffer-size">Buffer size:</label>
+        <input type="number" id="media-buffer-size" class="video-setting" value="100" style="width: 50px;">
         <br>
         <button id="media-set-button">Set media</button>
         <span style="font-weight: bold">Selected media:</span>
         <span id="selected-media">None</span>
-
-        <span class="hint hide" ><br>
+        <br>
+        <span class="hint hide" >
             <b>Source:</b> Source file to render<br>
             <b>Character count:</b> Aproximate number of (visible) characters to be used<br>
             <b>Row spacing:</b> Aditional distance between rows expected while rendering<br>
@@ -131,35 +135,35 @@
             <b>Chunk length:</b> Length of chunks in which the video is rendered, smaller values mean less waiting when jumping through video, but possible performance issues (video only)<br>
             <b>Set media (button):</b> Set currently used media by pressing this button<br>
         </span>
+        <br>
+        <span style="font-weight: bold; margin-left: 0px;">Info console:</span>
+        <span id="info-console">Nothing here yet</span>
     </div>
 
     <div>
-        <label for="player-text-size">Text size:</label>
-        <input type="range" id="player-text-size" min="1" max="50" step="1" style="width: 150px">
+        <label for="player-text-size", style="margin-left: 0px">Text size:</label>
+        <input type="range" id="player-text-size" min="1" max="100" step="1" value="15" style="width: 150px">
 
         <span style="font-weight: bold">Current time (s):</span>
         <span id="player-current-time">0</span>
 
         <label for="player-jump-time">Jump to time (s):</label>
         <input type="number" id="player-jump-time" value="0" style="width: 50px;">
-        <button id="player-jump-time-button" style="margin-left: 10px">Jump</button>
+        <button id="player-jump-time-button">Jump</button>
 
-        <button id="options-toggle-button" style="margin-left: 10px">Show/Hide options</button>
-        <button id="hint-toggle-button" style="margin-left: 10px">Show/Hide hints</button>
-        
-        <span class="hint hide"><br>
+        <button id="options-toggle-button" >Show/Hide options</button>
+        <button id="hint-toggle-button">Show/Hide hints</button>
+        <br>
+        <span class="hint hide">
             <b>Text size:</b> Text size of rendered media, if the "image" is too big try lowering this value<br>
             <b>Current time (s):</b> Current time since the start of the video in seconds (video only)<br>
             <b>Jump to time (s):</b> After pressing the Jump button, player will jump to the selected time of the video (video only)<br>
             <b>Keyboard controls:</b> Space to pause/unpause the video, A and D (or arrows) to jump back/forward 10s, if the controls are not working make sure that no text box is selected (video only)<br>
         </span>
-    
-        <br>
-        <span id="info-console"></span>
     </div>
 
     <div>
-        <span id="display"></span>
+        <span style="font-size: 15px; margin-left: 0px; white-space: pre-wrap" id="display"></span>
     </div>
 
 </body>

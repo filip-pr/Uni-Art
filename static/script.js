@@ -18,6 +18,7 @@ document.addEventListener("DOMContentLoaded", function () {
         mediaDistanceMetric = document.getElementById("media-distance-metric"),
         mediaFrameRate = document.getElementById("media-frame-rate"),
         mediaChunkLength = document.getElementById("media-chunk-length"),
+        mediaBufferSize = document.getElementById("media-buffer-size"),
         mediaSetButton = document.getElementById("media-set-button"),
         selectedMedia = document.getElementById("selected-media"),
 
@@ -29,6 +30,7 @@ document.addEventListener("DOMContentLoaded", function () {
         optionsToggleButton = document.getElementById("options-toggle-button"),
         hintToggleButton = document.getElementById("hint-toggle-button"),
 
+        infoConsole = document.getElementById("info-console"),
         display = document.getElementById("display");
 
     let fontSet = false;
@@ -70,6 +72,11 @@ document.addEventListener("DOMContentLoaded", function () {
         document.querySelector("body").style.background = selectedColor;
     }
 
+    function changeDisplaySize() {
+        let size = playerTextSize.value;
+        display.style.fontSize = size + "px";
+    }
+
     function loadFonts() {
         fetch("/get_fonts")
             .then(response => response.json())
@@ -101,6 +108,7 @@ document.addEventListener("DOMContentLoaded", function () {
         let forceMonospace = fontForceMonospace.checked;
         let renderSize = fontRenderSize.value;
         fontSetButton.disabled = true;
+        infoConsole.textContent = "loading font...";
         fetch("/set_font", {
             method: "POST",
             headers: {
@@ -120,12 +128,12 @@ document.addEventListener("DOMContentLoaded", function () {
         }).then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    display.textContent = "Font set successfully, loaded characters " + data.loadedChars;
+                    infoConsole.textContent = "Font set successfully, loaded characters " + data.loadedChars;
                     selectedFont.textContent = `${font.split("/").at(-1).split(".").at(0)} (${charset}, (${textColor}), (${backgroundColor}), ${embeddedColor}, ${kerning}, ${ligatures}, ${forceMonospace}, ${renderSize})`;
                     fontSet = true;
                 }
                 else {
-                    display.textContent = "Error setting font: " + data.error;
+                    infoConsole.textContent = "Error setting font: " + data.error;
                 }
                 fontSetButton.disabled = false;
             });
@@ -133,7 +141,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function ChangeMedia() {
         if (!fontSet) {
-            display.textContent = "Please select a font first";
+            infoConsole.textContent = "Please select a font first";
             return;
         }
         let media = mediaSource.value;
@@ -142,7 +150,9 @@ document.addEventListener("DOMContentLoaded", function () {
         let distanceMetric = mediaDistanceMetric.value;
         let frameRate = mediaFrameRate.value;
         let chunkLength = mediaChunkLength.value;
+        let bufferSize = mediaBufferSize.value;
         mediaSetButton.disabled = true;
+        infoConsole.textContent = "loading media...";
         fetch("/set_media", {
             method: "POST",
             headers: {
@@ -154,27 +164,36 @@ document.addEventListener("DOMContentLoaded", function () {
                 rowSpacing: rowSpacing,
                 distanceMetric: distanceMetric,
                 frameRate: frameRate,
-                chunkLength: chunkLength
+                chunkLength: chunkLength,
+                bufferSize: bufferSize
             })
         }).then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    display.textContent = "Media set successfully (loading...)";
+                    infoConsole.textContent = "Media set successfully, detected type " + data.detectedType;
                     mediaType = data.detectedType;
-                    selectedMedia.textContent = `${media.split("/").at(-1).split(".").at(0)} (${mediaType}, ${characterCount}, ${rowSpacing}, ${distanceMetric}, ${frameRate}, ${chunkLength})`;
-                    if (mediaType == "image") {
-                        display.textContent = "<image>";
-                    }
-                    else {
-                        display.textContent = "<video>";
-                    }
+                    selectedMedia.textContent = `${media.split("/").at(-1).split(".").at(0)} (${mediaType}, ${characterCount}, ${rowSpacing}, ${distanceMetric}, ${frameRate}, ${chunkLength}, ${bufferSize})`;
+                    changeBackground()
+                    fetch("get_frame", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                    }).then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                display.textContent = data.frame;
+                            }
+                            else {
+                                infoConsole.textContent = "Error getting frame: " + data.error;
+                            }
+                        });
                 }
                 else {
-                    display.textContent = "Error setting media: " + data.error;
+                    infoConsole.textContent = "Error setting media: " + data.error;
                 }
                 mediaSetButton.disabled = false;
             });
-
     }
 
 
@@ -185,7 +204,5 @@ document.addEventListener("DOMContentLoaded", function () {
     fontSetButton.addEventListener("click", changeFont);
     mediaSetButton.addEventListener("click", ChangeMedia);
 
-
-    fontBackgroundColor.addEventListener("change", changeBackground);
-
+    playerTextSize.addEventListener("input", changeDisplaySize);
 });

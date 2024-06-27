@@ -107,6 +107,7 @@ def set_media():
         distance_metric = media_data["distanceMetric"]
         frame_rate = int(media_data["frameRate"])
         chunk_length = int(media_data["chunkLength"])
+        buffer_size = int(media_data["bufferSize"])
         try:
             new_media = TextImage(
                 TextMedia.font,
@@ -126,12 +127,28 @@ def set_media():
                 row_spacing,
                 distance_metric,
                 chunk_length,
+                buffer_size,
             )
             TextMedia.media = new_media
             detected_type = "video"
     except Exception as e:  # pylint: disable=broad-except
         return jsonify(success=False, error=str(e))
     return jsonify(success=True, detectedType=detected_type)
+
+
+@app.route("/get_frame", methods=["POST"])
+def get_frame():
+    """Get the next frame of the media."""
+    try:
+        if isinstance(TextMedia.media, TextImage):
+            frame = TextMedia.media.text
+        elif isinstance(TextMedia.media, TextVideo):
+            frame = next(TextMedia.media.frame_generator)
+        else:
+            return jsonify(success=False, error="No media loaded")
+    except Exception as e:  # pylint: disable=broad-except
+        return jsonify(success=False, error=str(e))
+    return jsonify(success=True, frame=frame)
 
 
 if __name__ == "__main__":
