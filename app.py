@@ -1,7 +1,8 @@
-"""Main module of the application."""
+"""Module containing the Uni-Art app GUI (Flask app)."""
 
 import base64
 import os
+import webbrowser
 
 from flask import Flask, jsonify, render_template, request
 from PIL import UnidentifiedImageError
@@ -187,4 +188,5 @@ if __name__ == "__main__":
         os.makedirs(FONTS_DIR)
     if not os.path.exists(MEDIA_DIR):
         os.makedirs(MEDIA_DIR)
-    app.run(debug=True, threaded=True)
+    app.run(threaded=True)
+    webbrowser.open("http://127.0.0.1:5000", new=1)

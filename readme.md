@@ -31,10 +31,13 @@ You might also need to install ffmpeg:
 Simply clone the repository, setup a python virtual environment and install the dependencies.
 
 #### Running with GUI
-Run app.py. That should one you browser with the GUI which itself is pretty self-explanatory.
+Run app.py. That should open your browser with the GUI which itself is pretty self-explanatory (if you really need there is hints button).
 
 #### Running in console
 - TODO
+
+### Disclaimer
+Even though the GUI part (app.py) is technically a web server it is NOT meant to EVER be run any other way than locally. There is at least one pretty big security vulnerability (sending any file from the server to the client by just passing the file path as 'Other font path') and there likely are more. I only used flask as a convenient (although not as much as I first thought) way to use browser text rendering engine to render whatever text and font I want. 
 
 ### Possible issues
 - TODO
