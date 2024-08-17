@@ -3,9 +3,9 @@
 import numpy as np
 from PIL import Image
 
-from .image_query_font import ImageQueryFont
-from .constants import TEXT_IMAGE_MAGIC_NUMBER, BYTE_ORDER, INT_SIZE
+from .constants import BYTE_ORDER, INT_SIZE, TEXT_IMAGE_MAGIC_NUMBER
 from .helpers import estimate_new_size
+from .image_query_font import ImageQueryFont
 
 
 class TextImage:
@@ -40,8 +40,17 @@ class TextImage:
             image = Image.open(image)
         new_size = estimate_new_size(font, image.size, num_characters, row_spacing)
         image = image.resize(new_size)
-        image_array = np.array(image)
-        self.text = font.query(image_array, distance_metric)
+        image = image.convert("RGB")
+        self.image_array = np.array(image)
+        self.text = font.query(self.image_array, distance_metric)
+
+    def change_font(self, font: ImageQueryFont):
+        """Change the font of the text image.
+
+        Args:
+            font (ImageQueryFont): New font to use.
+        """
+        self.text = font.query(self.image_array)
 
     def save(self, path: str):
         """Function to save an image to a file.

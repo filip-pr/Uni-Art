@@ -1,25 +1,19 @@
 """Module for converting an image to text using a font."""
 
-import time
 import os
-import subprocess
-import threading
 import queue
+import subprocess
 import tempfile
+import threading
+import time
 from enum import Enum
 
 import cv2
 
-from .image_query_font import ImageQueryFont
+from .constants import (BYTE_ORDER, INT_SIZE, PROCESS_REFRESH_RATE,
+                        RENDER_TEMP_DIR, TEXT_VIDEO_MAGIC_NUMBER)
 from .helpers import estimate_new_size
-from .constants import (
-    RENDER_TEMP_DIR,
-    PROCESS_REFRESH_RATE,
-    TEXT_VIDEO_MAGIC_NUMBER,
-    BYTE_ORDER,
-    INT_SIZE,
-)
-
+from .image_query_font import ImageQueryFont
 
 # because cv2 is a C module...
 # pylint: disable=maybe-no-member
@@ -55,6 +49,7 @@ class VideoChunk:
             + f'-frames:v {frame_rate*length} -c:v libx264 -crf 0 -an "{self.name}"'
         )
         self.status = VideoChunkStatus.PENDING
+        self.capture = None
 
     def process(self):
         """Process the video chunk using FFmpeg.
@@ -62,9 +57,7 @@ class VideoChunk:
         Raises:
             ValueError: If FFmpeg fails to process the video chunk.
         """
-        if self.status == VideoChunkStatus.DELETED:
-            return
-        if self.status == VideoChunkStatus.READY:
+        if self.status in (VideoChunkStatus.READY, VideoChunkStatus.DELETED):
             return
         self.status = VideoChunkStatus.RUNNING
         try:
@@ -80,10 +73,17 @@ class VideoChunk:
             print(e)
             return
         self.status = VideoChunkStatus.READY
+        self.capture = cv2.VideoCapture(self.name)
 
     def delete(self):
-        """'Delete' the video chunk file."""
+        """Delete the video chunk file."""
+        if self.status == VideoChunkStatus.DELETED:
+            return
         self.status = VideoChunkStatus.DELETED
+        if self.capture is not None:
+            self.capture.release()
+        if os.path.exists(self.name):
+            os.remove(self.name)
 
 
 class VideoChunkHandler:
@@ -136,7 +136,7 @@ class VideoChunkHandler:
     def stop(self):
         """Stop the video chunk handler (cannot be resumed)."""
         if self._stopped:
-            raise ValueError("Video chunk handler has already been stopped")
+            return
         if self.curr_chunk is not None:
             self.curr_chunk.delete()
         if self.next_chunk is not None:
@@ -150,7 +150,7 @@ class VideoChunkHandler:
             new_time (int): New time in seconds.
         """
         if self._stopped:
-            raise ValueError("Video chunk handler has already been stopped")
+            raise ValueError("Video chunk handler has been stopped")
         self.next_chunk_time = new_time
         if self.next_chunk is not None:
             self.next_chunk.delete()
@@ -165,20 +165,22 @@ class VideoChunkHandler:
 
     def iter_frames(self):
         """Iterate over the frames of the video."""
-        if self._stopped:
-            raise ValueError("Video chunk handler has already been stopped")
         while True:
-            while self.curr_chunk.status != VideoChunkStatus.READY:
-                if self.curr_chunk.status == VideoChunkStatus.DELETED:
-                    return
+            while self.curr_chunk.status not in (
+                VideoChunkStatus.READY,
+                VideoChunkStatus.DELETED,
+            ):
                 time.sleep(PROCESS_REFRESH_RATE)
-            video_capture = cv2.VideoCapture(self.curr_chunk.name)
+            if self._stopped:
+                raise ValueError("Video chunk handler has been stopped")
+            video_capture = self.curr_chunk.capture
+            if video_capture is None:
+                raise ValueError("Chunk capture should not be None")
             while True:
                 success, frame = video_capture.read()
                 if not success:
                     break
                 yield frame
-            video_capture.release()
             self._next_chunk()
             if self.next_chunk_time >= self.video_length:
                 break
@@ -224,10 +226,10 @@ class TextVideo:
         self.new_size = estimate_new_size(
             font, original_size, num_characters_per_frame, row_spacing
         )
-        self.video_chunk_handler = VideoChunkHandler(
+        self._video_chunk_handler = VideoChunkHandler(
             video, frame_rate, self.new_size, chunk_length
         )
-        self.frame_generator = (
+        self._frame_generator = (
             self._iter_frames_from_video()
             if not self.from_render
             else self._iter_frames_from_render()
@@ -235,7 +237,7 @@ class TextVideo:
         self._stopped = False
 
     def _set_time_from_video(self, new_time: int):
-        self.video_chunk_handler.set_time(new_time)
+        self._video_chunk_handler.set_time(new_time)
 
     def _set_time_from_render(self, new_time: int):
         frame_number = new_time * self.frame_rate
@@ -251,13 +253,13 @@ class TextVideo:
         """
         if self._stopped:
             raise ValueError("Video player has been stopped")
-        if new_time < 0 or new_time >= self.video_chunk_handler.video_length:
+        if new_time < 0 or new_time >= self._video_chunk_handler.video_length:
             return
         if not self.from_render:
             self._set_time_from_video(new_time)
         else:
             self._set_time_from_render(new_time)
-        self.frame_generator = (
+        self._frame_generator = (
             self._iter_frames_from_video()
             if not self.from_render
             else self._iter_frames_from_render()
@@ -265,7 +267,7 @@ class TextVideo:
 
     def _iter_frames_from_video(self):
         q = queue.Queue(self.buffer_size)
-        video_frame_generator = self.video_chunk_handler.iter_frames()
+        video_frame_generator = self._video_chunk_handler.iter_frames()
 
         def buffer_frames():
             while True:
@@ -292,13 +294,31 @@ class TextVideo:
             frame_bytes = self.file_pointer.read(frame_size)
             yield frame_bytes.decode("utf-8")
 
+    def change_font(self, font: ImageQueryFont):
+        """Change the font of the video.
+
+        Args:
+            font (ImageQueryFont): New font to use.
+        """
+        self.font = font
+
+    def next_frame(self):
+        """Get the next frame of the video.
+
+        Returns:
+            str: Next frame of the video.
+        """
+        if self._stopped:
+            raise ValueError("Video player has been stopped")
+        return next(self._frame_generator)
+
     def stop(self):
         """Stop the video player (cannot be resumed)."""
         if self._stopped:
-            raise ValueError("Video player has already been stopped")
+            return
         if self.from_render:
             self.file_pointer.close()
-        self.video_chunk_handler.stop()
+        self._video_chunk_handler.stop()
         self._stopped = True
 
     def save(self, path: str):
@@ -313,7 +333,7 @@ class TextVideo:
         self.set_time(0)
         frame_count = 0
         with open(path + ".tmp", "wb") as file:
-            for frame in self.frame_generator:
+            for frame in self._frame_generator:
                 frame_bytes = frame.encode("utf-8")
                 file.write(len(frame_bytes).to_bytes(INT_SIZE, BYTE_ORDER))
                 file.write(frame_bytes)

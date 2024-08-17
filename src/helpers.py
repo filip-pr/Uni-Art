@@ -1,17 +1,14 @@
 """Module to provide helper functions for the media2text package."""
 
 import math
-import time
 import os
+import time
 
 import numpy as np
 from PIL import Image
 
+from .constants import RENDER_TEMP_DIR, SYSTEM_FONT_PATH
 from .image_query_font import ImageQueryFont
-from .constants import (
-    SYSTEM_FONT_PATH,
-    RENDER_TEMP_DIR,
-)
 
 
 def estimate_new_size(

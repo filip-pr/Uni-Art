@@ -1,11 +1,11 @@
 """Module containing query_font constants"""
 
-from sys import platform
+import sys
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 
-match platform:
+match sys.platform:
     case "win32":
         SYSTEM_FONT_PATH = "C:/Windows/Fonts/"
     case "linux" | "linux2":

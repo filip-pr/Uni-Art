@@ -1,11 +1,12 @@
 """Main module of the application."""
 
+import base64
 import os
 
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, jsonify, render_template, request
 from PIL import UnidentifiedImageError
 
-from media2text import get_system_fonts_paths, ImageQueryFont, TextImage, TextVideo
+from src import ImageQueryFont, TextImage, TextVideo, get_system_fonts_paths
 
 app = Flask(__name__)
 
@@ -18,6 +19,7 @@ class TextMedia:
 
     font = None
     media = None
+    changing_media = False
 
 
 @app.route("/")
@@ -87,16 +89,28 @@ def set_font():
             render_size,
         )
         TextMedia.font = new_font
+        if TextMedia.media is not None:
+            TextMedia.media.change_font(new_font)
+        with open(font_path, "rb") as font_file:
+            font_data = font_file.read()
+            font_data = base64.b64encode(font_data).decode("utf-8")
     except Exception as e:  # pylint: disable=broad-except
         return jsonify(success=False, error=str(e))
-    return jsonify(success=True, loadedChars=TextMedia.font.num_characters)
+    return jsonify(
+        success=True, fontData=font_data, loadedChars=TextMedia.font.num_characters
+    )
 
 
 @app.route("/set_media", methods=["POST"])
 def set_media():
     """Set the media to be used."""
+    if not TextMedia.changing_media:
+        TextMedia.changing_media = True
+    else:
+        return jsonify(success=False, error="Media is already being changed")
     media_data = request.json
     if media_data is None:
+        TextMedia.changing_media = False
         return jsonify(success=False, error="Unknown error")
     try:
         if TextMedia.font is None:
@@ -133,7 +147,9 @@ def set_media():
             detected_type = "video"
         TextMedia.media = new_media
     except Exception as e:  # pylint: disable=broad-except
+        TextMedia.changing_media = False
         return jsonify(success=False, error=str(e))
+    TextMedia.changing_media = False
     return jsonify(success=True, detectedType=detected_type)
 
 
@@ -144,12 +160,26 @@ def get_frame():
         if isinstance(TextMedia.media, TextImage):
             frame = TextMedia.media.text
         elif isinstance(TextMedia.media, TextVideo):
-            frame = next(TextMedia.media.frame_generator)
+            frame = TextMedia.media.next_frame()
         else:
             return jsonify(success=False, error="No media loaded")
     except Exception as e:  # pylint: disable=broad-except
         return jsonify(success=False, error=str(e))
     return jsonify(success=True, frame=frame)
+
+@app.route("/set_time", methods=["POST"])
+def set_time():
+    """Set the time of the video."""
+    time_data = request.json
+    if time_data is None:
+        return jsonify(success=False, error="Unknown error")
+    try:
+        time = time_data["time"]
+        if isinstance(TextMedia.media, TextVideo):
+            TextMedia.media.set_time(time)
+    except Exception as e:  # pylint: disable=broad-except
+        return jsonify(success=False, error=str(e))
+    return jsonify(success=True)
 
 
 if __name__ == "__main__":
