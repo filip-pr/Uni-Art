@@ -230,6 +230,7 @@ class TextVideo:
             self.file_pointer = open(video, "rb")
             self._frame_generator = self._iter_frames_from_render()
             self._stopped = False
+            self._set_time_from_render(0)
             return
         self.font = font
         self.video = video
@@ -269,7 +270,9 @@ class TextVideo:
         """
         if self._stopped:
             raise ValueError("Video player has been stopped")
-        if new_time < 0 or new_time >= self._video_chunk_handler.video_length:
+        if new_time < 0 or (
+            not self.from_render and new_time >= self._video_chunk_handler.video_length
+        ):
             return
         if not self.from_render:
             self._set_time_from_video(new_time)
@@ -337,7 +340,8 @@ class TextVideo:
             return
         if self.from_render:
             self.file_pointer.close()
-        self._video_chunk_handler.stop()
+        if hasattr(self, "_video_chunk_handler"):
+            self._video_chunk_handler.stop()
         self._stopped = True
 
     def save(self, path: str):
@@ -347,6 +351,8 @@ class TextVideo:
             video_player (TextVideoPlayer): Video player to save.
             path (str): Path to save the video.
         """
+        if not hasattr(self, "_video_chunk_handler"):
+            raise ValueError("Trying to save an already rendered video")
         if self._stopped:
             raise ValueError("Video player has been stopped")
         self.set_time(0)
@@ -380,5 +386,4 @@ class TextVideo:
                     frame = tmp_file.read(frame_size)
                     file.write(frame_size.to_bytes(INT_SIZE, BYTE_ORDER))
                     file.write(frame)
-                file.write(tmp_file.read())
             os.remove(path + ".tmp")
