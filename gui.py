@@ -7,8 +7,7 @@ import webbrowser
 from flask import Flask, jsonify, render_template, request
 from PIL import UnidentifiedImageError
 
-from image2text import (ImageQueryFont, TextImage, TextVideo,
-                        get_system_fonts_paths)
+from image2text import ImageQueryFont, TextImage, TextVideo, get_system_fonts_paths
 
 app = Flask(__name__)
 
