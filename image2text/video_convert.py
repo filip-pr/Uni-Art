@@ -11,8 +11,13 @@ from enum import Enum
 
 import cv2
 
-from .constants import (BYTE_ORDER, INT_SIZE, PROCESS_REFRESH_RATE,
-                        RENDER_TEMP_DIR, TEXT_VIDEO_MAGIC_NUMBER)
+from .constants import (
+    BYTE_ORDER,
+    INT_SIZE,
+    PROCESS_REFRESH_RATE,
+    RENDER_TEMP_DIR,
+    TEXT_VIDEO_MAGIC_NUMBER,
+)
 from .helpers import estimate_new_size
 from .image_query_font import ImageQueryFont
 
@@ -223,6 +228,8 @@ class TextVideo:
                 self.frames_offset = 3 * INT_SIZE + self.frame_count * INT_SIZE
         if self.from_render:
             self.file_pointer = open(video, "rb")
+            self._frame_generator = self._iter_frames_from_render()
+            self._stopped = False
             return
         self.font = font
         self.video = video
@@ -242,11 +249,7 @@ class TextVideo:
         self._video_chunk_handler = VideoChunkHandler(
             video, frame_rate, self.new_size, chunk_length
         )
-        self._frame_generator = (
-            self._iter_frames_from_video()
-            if not self.from_render
-            else self._iter_frames_from_render()
-        )
+        self._frame_generator = self._iter_frames_from_video()
         self._stopped = False
 
     def _set_time_from_video(self, new_time: int):
@@ -354,6 +357,12 @@ class TextVideo:
                 file.write(len(frame_bytes).to_bytes(INT_SIZE, BYTE_ORDER))
                 file.write(frame_bytes)
                 frame_count += 1
+                if frame_count % self.frame_rate == 0:
+                    print(
+                        f"Processed {frame_count//self.frame_rate}/"
+                        + f"{self._video_chunk_handler.video_length} seconds",
+                        end="\r",
+                    )
         with open(path, "wb") as file:
             file.write(TEXT_VIDEO_MAGIC_NUMBER.to_bytes(INT_SIZE, BYTE_ORDER))
             file.write(self.frame_rate.to_bytes(INT_SIZE, BYTE_ORDER))

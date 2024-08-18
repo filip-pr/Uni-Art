@@ -345,13 +345,9 @@ document.addEventListener('DOMContentLoaded', function () {
     mediaSetButton.addEventListener('click', ChangeMedia);
     playerTextSize.addEventListener('input', changeDisplaySize);
     playerJumpTimeButton.addEventListener('click', () => {
-        was_playing = playerIsPlaying
         if (playerIsPlaying) {
             togglePlay();
         } setTimeout(setTime, 100);
-        if (was_playing) {
-            togglePlay();
-        }
     });
     document.addEventListener('keydown', event => {
         if (event.code === 'Space' && document.activeElement.tagName != 'INPUT') {

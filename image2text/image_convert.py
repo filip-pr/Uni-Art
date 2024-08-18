@@ -37,6 +37,7 @@ class TextImage:
                 magic_number = int.from_bytes(file.read(INT_SIZE), BYTE_ORDER)
                 if magic_number == TEXT_IMAGE_MAGIC_NUMBER:
                     self.text = file.read().decode("utf-8")
+                    return
             image = Image.open(image)
         new_size = estimate_new_size(font, image.size, num_characters, row_spacing)
         image = image.resize(new_size)

@@ -298,7 +298,7 @@ class ImageQueryFont:
         Returns:
             tuple[int, int]: Shape that the image should be resized to (width, height).
         """
-        num_rows = num_rows + 1 if num_rows % 2 == 1 else num_rows
+        num_rows = num_rows + (1 if num_rows % 2 == 1 else num_rows)
         row_height = round(row_spacing * self.char_height)
         original_aspect_ratio = original_size[0] / original_size[1]
         num_cols = round(num_rows * original_aspect_ratio * row_spacing)

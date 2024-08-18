@@ -7,7 +7,8 @@ import webbrowser
 from flask import Flask, jsonify, render_template, request
 from PIL import UnidentifiedImageError
 
-from src import ImageQueryFont, TextImage, TextVideo, get_system_fonts_paths
+from image2text import (ImageQueryFont, TextImage, TextVideo,
+                        get_system_fonts_paths)
 
 app = Flask(__name__)
 
@@ -66,7 +67,7 @@ def set_font():
         charset = font_data["charset"]
         match charset:
             case "ascii":
-                charset = set(chr(i) for i in range(127))
+                charset = set(chr(i) for i in range(128))
             case "unicode":
                 charset = set(chr(i) for i in range(0x110000))
             case _:
