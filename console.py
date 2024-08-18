@@ -10,7 +10,9 @@ from image2text import ImageQueryFont, TextImage, TextVideo
 def parse_args():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("-m", "--mode", choices=["file", "terminal"], help="Mode")
+    parser.add_argument(
+        "-m", "--mode", choices=["file", "terminal"], help="Mode", required=True
+    )
     parser.add_argument("-s", "--media-source", help="Media source file", required=True)
     parser.add_argument("-f", "--font-source", help="Font source file", required=True)
     parser.add_argument(
