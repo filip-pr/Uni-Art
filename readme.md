@@ -11,9 +11,9 @@ Uni-Art allows for a great deal of customization, you can:
 - Toggle font features like ligatures and kerning
 - Change the text and background colors
 - Specifying number of characters an image or a video frame should have
-- And more..
+- And more...
 
-Uni-Art player is also able to render and play videos in real time. The performance largely depends on what hardware you're running it on, but even with couple years old mid-range system one can render 5000+ character per frame video in 30fps in without lag with monospace font and about 1000 character per frame video in 30fps in without lag with non-monospace (querying for non-monospace fonts can't be parallelized that well).
+Uni-Art player is also able to render and play videos in real time. The performance largely depends on what hardware you're running it on, but even with a couple years old mid-range system one can render ~5000 character per frame video in 30fps without lag with monospace font and about ~1000 character per frame video in 30fps without lag with non-monospace (querying for non-monospace fonts can't be parallelized as well).
 
 Please note that only operating system this was tested on is Windows 10 (with python 3.11.3) and there is no guarantee of it running anywhere else. Although in theory there shouldn't be a reason for it not to (at least not one that I'm aware of).
 
@@ -31,13 +31,15 @@ You might also need to install ffmpeg:
 Simply clone the repository, setup a python virtual environment and install the dependencies.
 
 #### Running with GUI
-Run app.py. That should open your browser with the GUI which itself is pretty self-explanatory (if you really need there is hints button).
+Run gui.py. That should open your browser with the GUI which itself is pretty self-explanatory (if you really need there is hints button). Also please be patient and don't spam buttons as the multithreaded nature (and the fact that this is my first time working with anything of that sort) can make the app a little buggy.
+
+#### Disclaimer
+Even though the GUI app (gui.py) is technically a web server it is NOT EVER meant to be run any other way than locally. There is at least one pretty big security vulnerability (sending any file from the server to the client by just passing the file path as 'Other font path') and there likely are more. I only used flask as a convenient (although not as much as I first thought) way to use browser text rendering engine to render whatever text and font I wanted. 
+
 
 #### Running in console
-- TODO
+Run console.py.
 
-### Disclaimer
-Even though the GUI part (app.py) is technically a web server it is NOT meant to EVER be run any other way than locally. There is at least one pretty big security vulnerability (sending any file from the server to the client by just passing the file path as 'Other font path') and there likely are more. I only used flask as a convenient (although not as much as I first thought) way to use browser text rendering engine to render whatever text and font I want. 
 
 ### Possible issues
 - TODO

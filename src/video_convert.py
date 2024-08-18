@@ -10,8 +10,13 @@ from enum import Enum
 
 import cv2
 
-from .constants import (BYTE_ORDER, INT_SIZE, PROCESS_REFRESH_RATE,
-                        RENDER_TEMP_DIR, TEXT_VIDEO_MAGIC_NUMBER)
+from .constants import (
+    BYTE_ORDER,
+    INT_SIZE,
+    PROCESS_REFRESH_RATE,
+    RENDER_TEMP_DIR,
+    TEXT_VIDEO_MAGIC_NUMBER,
+)
 from .helpers import estimate_new_size
 from .image_query_font import ImageQueryFont
 
@@ -43,11 +48,24 @@ class VideoChunk:
             dir=RENDER_TEMP_DIR, prefix=f"s{start_time}_", suffix=".mkv", delete=False
         )
         self.name = chunk_file.name
-        self.ffmpeg_command = (
-            f'ffmpeg -ss {start_time} -i "{video}" -y -vf "fps={frame_rate}, '
-            + f'scale={new_size[0]}:{new_size[1]}:flags=lanczos" '
-            + f'-frames:v {frame_rate*length} -c:v libx264 -crf 0 -an "{self.name}"'
-        )
+        self.ffmpeg_command = [
+            "ffmpeg",
+            "-ss",
+            str(start_time),
+            "-i",
+            video,
+            "-y",
+            "-vf",
+            f"fps={frame_rate}, scale={new_size[0]}:{new_size[1]}:flags=lanczos",
+            "-frames:v",
+            str(frame_rate * length),
+            "-c:v",
+            "libx264",
+            "-crf",
+            "0",
+            "-an",
+            self.name,
+        ]
         self.status = VideoChunkStatus.PENDING
         self.capture = None
 
@@ -181,9 +199,9 @@ class VideoChunkHandler:
                 if not success:
                     break
                 yield frame
-            self._next_chunk()
             if self.next_chunk_time >= self.video_length:
                 break
+            self._next_chunk()
 
 
 class TextVideo:
@@ -272,7 +290,10 @@ class TextVideo:
         def buffer_frames():
             while True:
                 if q.qsize() < self.buffer_size:
-                    frame = next(video_frame_generator)
+                    try:
+                        frame = next(video_frame_generator)
+                    except StopIteration:
+                        break
                     q.put(self.font.query(frame, self.distance_metric))
                 else:
                     time.sleep(PROCESS_REFRESH_RATE)

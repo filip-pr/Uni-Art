@@ -188,15 +188,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (data.success) {
                     infoConsole.textContent =
                         'Font set successfully, loaded characters ' + data.loadedChars
-                    fontInfo.textContent = `${selectedFont
-                        .split('/')
-                        .at(-1)
-                        .split('.')
-                        .at(0)} (${selectedCharset}, (${hexToRgb(
-                            selectedTextColor
-                        )}), (${hexToRgb(
-                            selectedBackgroundColor
-                        )}), ${selectedEmbeddedColor}, ${selectedKerning}, ${selectedLigatures}, ${selectedForceMonospace}, ${selectedRenderSize})`;
+                    fontInfo.textContent = `${selectedFont} (${selectedCharset}, (${hexToRgb(
+                        selectedTextColor
+                    )}), (${hexToRgb(
+                        selectedBackgroundColor
+                    )}), ${selectedEmbeddedColor}, ${selectedKerning}, ${selectedLigatures}, ${selectedForceMonospace}, ${selectedRenderSize})`;
                     display.style.color = `${selectedTextColor}`;
                     const fontBytes = atob(data.fontData);
                     const fontArray = new Uint8Array(fontBytes.length);
@@ -209,6 +205,9 @@ document.addEventListener('DOMContentLoaded', function () {
                         display.style.fontFamily = 'displayFont'
                     })
                     changeBackground();
+                    if (mediaType === 'image') {
+                        updateFrame();
+                    }
                     fontSet = true;
                 } else {
                     infoConsole.textContent = 'Error setting font: ' + data.error;
@@ -218,9 +217,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function ChangeMedia() {
-        if (playerIsPlaying) {
-            togglePlay();
-        }
         if (!fontSet) {
             infoConsole.textContent = 'Please select a font first';
             return;
@@ -259,13 +255,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     infoConsole.textContent =
                         'Media set successfully, detected type ' + data.detectedType;
                     mediaType = data.detectedType;
-                    mediaInfo.textContent = `${selectedMedia
-                        .split('/')
-                        .at(-1)
-                        .split('.')
-                        .at(
-                            0
-                        )} (${mediaType}, ${selectedCharacterCount}, ${selectedRowSpacing}, ${selectedDistanceMetric}, ${selectedFrameRate}, ${selectedChunkLength}, ${selectedBufferSize})`;
+                    mediaInfo.textContent = `${selectedMedia} (${mediaType}, ${selectedCharacterCount}, ${selectedRowSpacing}, ${selectedDistanceMetric}, ${selectedFrameRate}, ${selectedChunkLength}, ${selectedBufferSize})`;
                     fetch('get_frame', {
                         method: 'POST',
                         headers: {
@@ -316,9 +306,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function setTime() {
-        if (playerIsPlaying) {
-            togglePlay();
-        }
         let time = parseInt(playerJumpTime.value);
         if (time < 0) {
             time = 0;
@@ -357,7 +344,15 @@ document.addEventListener('DOMContentLoaded', function () {
     fontSetButton.addEventListener('click', changeFont);
     mediaSetButton.addEventListener('click', ChangeMedia);
     playerTextSize.addEventListener('input', changeDisplaySize);
-    playerJumpTimeButton.addEventListener('click', setTime);
+    playerJumpTimeButton.addEventListener('click', () => {
+        was_playing = playerIsPlaying
+        if (playerIsPlaying) {
+            togglePlay();
+        } setTimeout(setTime, 100);
+        if (was_playing) {
+            togglePlay();
+        }
+    });
     document.addEventListener('keydown', event => {
         if (event.code === 'Space' && document.activeElement.tagName != 'INPUT') {
             event.preventDefault();

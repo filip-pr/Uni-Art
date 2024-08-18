@@ -161,12 +161,20 @@ def get_frame():
         if isinstance(TextMedia.media, TextImage):
             frame = TextMedia.media.text
         elif isinstance(TextMedia.media, TextVideo):
-            frame = TextMedia.media.next_frame()
+            try:
+                frame = TextMedia.media.next_frame()
+            except StopIteration:
+                return jsonify(success=False, error="End of video reached")
+            except ValueError as e:
+                if str(e) == "generator already executing":
+                    return jsonify(success=False, error="Last frame is still rendering")
+                return jsonify(success=False, error=str(e))
         else:
             return jsonify(success=False, error="No media loaded")
     except Exception as e:  # pylint: disable=broad-except
         return jsonify(success=False, error=str(e))
     return jsonify(success=True, frame=frame)
+
 
 @app.route("/set_time", methods=["POST"])
 def set_time():
@@ -188,5 +196,7 @@ if __name__ == "__main__":
         os.makedirs(FONTS_DIR)
     if not os.path.exists(MEDIA_DIR):
         os.makedirs(MEDIA_DIR)
-    app.run(threaded=True)
-    webbrowser.open("http://127.0.0.1:5000", new=1)
+    HOST = "http://127.0.0.1"
+    PORT = 5000
+    webbrowser.open(f"{HOST}:{PORT}", new=1)
+    app.run(host=HOST.removeprefix("http://"), port=PORT, threaded=True)
