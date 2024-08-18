@@ -73,7 +73,7 @@ From my experience this is only noticeable on black and white or other high cont
 This is more a feature rather than a bug. It is caused by color normalization. Without it the image quality would be quite a bit worse and lots of not so similar colors would show as the same character making the image unrecognizable.
 
 #### Turning ligatures on deforms the image/video
-This is caused by the fact that not all ligatures supported by the font are actually supported by the browser. There is really nothing one can do about that so they are turned off by default. When they are turned of hair space is inserted after each so accidental creation of ligatures is prevented.
+This is caused by the fact that not all ligatures supported by the font are actually supported by the browser. There is really nothing one can do about that so they are turned off by default. When they are turned off hair space is inserted after each so accidental creation of ligatures is prevented.
 
 ## Save file formats
 
