@@ -3,6 +3,7 @@
 import os
 import queue
 import subprocess
+import sys
 import tempfile
 import threading
 import time
@@ -10,13 +11,8 @@ from enum import Enum
 
 import cv2
 
-from .constants import (
-    BYTE_ORDER,
-    INT_SIZE,
-    PROCESS_REFRESH_RATE,
-    RENDER_TEMP_DIR,
-    TEXT_VIDEO_MAGIC_NUMBER,
-)
+from .constants import (BYTE_ORDER, INT_SIZE, PROCESS_REFRESH_RATE,
+                        RENDER_TEMP_DIR, TEXT_VIDEO_MAGIC_NUMBER)
 from .helpers import estimate_new_size
 from .image_query_font import ImageQueryFont
 
@@ -70,11 +66,7 @@ class VideoChunk:
         self.capture = None
 
     def process(self):
-        """Process the video chunk using FFmpeg.
-
-        Raises:
-            ValueError: If FFmpeg fails to process the video chunk.
-        """
+        """Process the video chunk using FFmpeg."""
         if self.status in (VideoChunkStatus.READY, VideoChunkStatus.DELETED):
             return
         self.status = VideoChunkStatus.RUNNING
@@ -88,8 +80,7 @@ class VideoChunk:
         except subprocess.CalledProcessError as e:
             if os.path.exists(self.name):
                 os.remove(self.name)
-            print(e)
-            return
+            print(e, file=sys.stderr)
         self.status = VideoChunkStatus.READY
         self.capture = cv2.VideoCapture(self.name)
 
@@ -143,6 +134,8 @@ class VideoChunkHandler:
             self.curr_chunk.delete()
         self.curr_chunk = self.next_chunk
         self.next_chunk_time += self.chunk_length
+        if self.next_chunk_time >= self.video_length:
+            return
         self.next_chunk = VideoChunk(
             self.video,
             self.next_chunk_time,
@@ -172,6 +165,8 @@ class VideoChunkHandler:
         self.next_chunk_time = new_time
         if self.next_chunk is not None:
             self.next_chunk.delete()
+        if self.next_chunk_time >= self.video_length:
+            return
         self.next_chunk = VideoChunk(
             self.video,
             self.next_chunk_time,
