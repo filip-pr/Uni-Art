@@ -41,7 +41,7 @@ Run console.py with desired arguments:
 - `-m or --mode`, choose the output, either file or terminal (required)
 - `-s or --media-source`, path to used media file (required)
 - `-f or --font-source`, path to used font (required)
-- `--charset`, charset, either unicode, ascii or string of allowed characters(default=unicode)
+- `--charset`, charset, either unicode, ascii or string of allowed characters (default=unicode)
 - `--text-color`, text color in #RRGGBB format (default=#000000)
 - `--background-color`, background color in #RRGGBB format (default=#FFFFFF)
 - `--color`, if present, embedded color will be used
